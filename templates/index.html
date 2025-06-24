@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="hero py-5 text-center mb-5">
+  <div class="container">
+    <h1 class="display-4 fw-bold">Connect & Grow</h1>
+    <p class="lead mb-4">Join the network and expand your professional connections.</p>
+    <a href="{{ url_for('new_profile') }}" class="btn btn-light btn-lg"><i class="bi bi-person-plus-fill me-1"></i>Create your profile</a>
+  </div>
+</div>
+<h1 class="mb-3">Professional Networking Profiles</h1>
+{% if profiles %}
+  <div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for p in profiles %}
+      <div class="col">
+        <div class="card h-100 profile-card">
+          <img src="https://source.unsplash.com/random/300x200/?portrait&{{ p.id }}" class="card-img-top" alt="avatar">
+          <div class="card-body">
+            <h5 class="card-title">{{ p.name }}</h5>
+            <h6 class="card-subtitle mb-2 text-muted">{{ p.headline }}</h6>
+            <p class="card-text">{{ p.bio|truncate(120) }}</p>
+            <a href="{{ url_for('view_profile', profile_id=p.id) }}" class="btn btn-primary">View Profile</a>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No profiles yet. <a href="{{ url_for('new_profile') }}">Create one</a>!</p>
+{% endif %}
+{% endblock %}

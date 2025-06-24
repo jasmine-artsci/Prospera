@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card mb-4 profile-card text-center p-4">
+  <img src="https://source.unsplash.com/random/120x120/?portrait&{{ profile.id }}" class="avatar mb-3" alt="avatar">
+  <div class="card-body">
+    <h3 class="fw-bold mb-0">{{ profile.name }}</h3>
+    <p class="text-muted mb-2">{{ profile.headline }}</p>
+    <p class="mt-3">{{ profile.bio }}</p>
+  </div>
+</div>
+
+<h4>Connections</h4>
+<ul class="list-group mb-3">
+  {% for conn in connections %}
+    {% set other = conn.requester if conn.receiver.id == profile.id else conn.receiver %}
+    <li class="list-group-item d-flex justify-content-between align-items-center">
+      <span>{{ other.name }}</span>
+      <a href="{{ url_for('view_profile', profile_id=other.id) }}" class="btn btn-sm btn-outline-secondary">View</a>
+    </li>
+  {% else %}
+    <li class="list-group-item">No connections yet.</li>
+  {% endfor %}
+</ul>
+
+<h4>Connect with someone</h4>
+<form method="post" action="{{ url_for('connect') }}" class="row gy-2 gx-3 align-items-center">
+  <input type="hidden" name="requester" value="{{ profile.id }}">
+  <div class="col-auto">
+    <select class="form-select" name="receiver" required>
+      <option disabled selected value="">Choose profile...</option>
+
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Connect</button>
+  </div>
+</form>
+<script>
+// Populate dropdown with other profiles via embedded JSON for simplicity
+const profiles = {{ profiles_json|tojson }};
+const select = document.querySelector('select[name="receiver"]');
+const currentId = {{ profile.id|tojson }};
+// add options excluding current user
+profiles.forEach(p => {
+  if(p.id !== currentId){
+    const opt = document.createElement('option');
+    opt.value = p.id;
+    opt.textContent = p.name;
+    select.appendChild(opt);
+  }
+});
+</script>
+{% endblock %}
