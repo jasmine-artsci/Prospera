@@ -80,7 +80,7 @@ const Header = ({
             </div>
 
             <div className="">
-              <Link href="/sign-up">
+              <Link href="/onboarding">
                 <button onMouseOver={()=>setIsAnimating(true)} onMouseOut={()=>setIsAnimating(false)} className={`${isAnimating ? "shadow-2xl" : "shadow-none"} hover:border-transparent relative items-center overflow-hidden px-3.5 py-1.5 bg-black/80 text-white rounded-xl font-semibold cursor-pointer`}>
                     <span className={`absolute inset-0 bg-emerald-700 scale-0 origin-center rounded-full transition-transform duration-400 transform ${isAnimating ? 'scale-110 ' : "scale-0"}`}></span>
                     <span className="relative z-10">Get Started</span>
