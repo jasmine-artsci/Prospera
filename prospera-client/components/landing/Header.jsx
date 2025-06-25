@@ -35,11 +35,6 @@ const Header = ({
       listener.subscription.unsubscribe();
     };
   }, [])
-  
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    location.reload(); 
-  };
 
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -114,10 +109,10 @@ const Header = ({
                 <button 
                   onMouseOver={()=>setIsAnimating(true)} 
                   onMouseOut={()=>setIsAnimating(false)} 
-                  onClick={handleLogout}
+                  onClick={()=>router.push("/profile")}
                   className={`${isAnimating ? "shadow-2xl" : "shadow-none"} hover:border-transparent relative items-center overflow-hidden px-3.5 py-1.5 bg-black/80 text-white rounded-xl font-semibold cursor-pointer`}>
                     <span className={`absolute inset-0 bg-emerald-700 scale-0 origin-center rounded-full transition-transform duration-400 transform ${isAnimating ? 'scale-120 ' : "scale-0"}`}></span>
-                    <span className="relative z-10">Logout</span>
+                    <span className="relative z-10">Profile</span>
                 </button>
                 )  
                 :

@@ -19,7 +19,7 @@ const stepDataMentor = [
           id: "q3",
           question: "Which part of the Canadian professional landscape do you feel MOST confident guiding newcomers through?",
           type: "multi-select",
-          options: ["Workplace culture and etiquette", "Networking and relationship building", "Career progression pathways", "Industry-specific regulations", "Professional certifications and licensing", "Salary negotiation", "Job search strategies", "Interview processes", "Professional communication styles", "Work-life balance expectations", "Leadership and management styles", "Diversity and inclusion practices"]
+          options: ["Workplace culture and etiquette", "Licensing & credential recognition", "Job search, networking & interviews", "Salary, benefits & career progression"]
         },
         {
           id: "q4",
@@ -101,7 +101,7 @@ const stepDataMentor = [
           id: "q10",
           question: "Pick your top three professional values (rank by importance).",
           type: "dropdown-ranking",
-          options: ["Work-life balance", "Career advancement", "Financial security", "Creative freedom", "Social impact", "Team collaboration", "Leadership opportunities", "Continuous learning", "Job stability", "Innovation", "Recognition", "Autonomy"]
+          options: ["Job Search & Career Transition", "Leadership & Advancement", "Skills Growth & Network Building", "Work‑Life Balance & Well‑Being"]
         },
         {
           id: "q11",
@@ -121,20 +121,24 @@ const stepDataMentor = [
           question: "Identify up to three areas you can best support .",
           type: "dropdown-input",
           maxSelections: 3,
-          options: ["Language barriers", "Cultural differences", "Lack of Canadian experience", "Professional network gaps", "Credential recognition", "Technical skills gap", "Soft skills development", "Time management", "Confidence building", "Other (please specify)"]
+          options: [
+            "Communication & Culture", "Canadian Experience & Networking", "Credentials & Skill Alignment", "Personal Effectiveness"
+          ]
         },
         {
           id: "q13",
           question: "What is the challenge you can best help with ?",
           type: "multi-select",
-          options: ["Finding relevant job opportunities", "Building professional networks", "Developing leadership skills", "Improving communication", "Advancing in current role", "Changing career paths", "Balancing work and personal life", "Managing workplace stress", "Learning new technologies", "Understanding organizational politics"]
+          options: ["Job Search & Career Transition", "Leadership & Advancement", "Skills Growth & Network Building", "Work‑Life Balance & Well‑Being"]
         },
         {
           id: "q14",
           question: "Select the top 3 competencies you want coach in.",
           type: "multi-select",
           maxSelections: 3,
-          options: ["Leadership and management", "Communication and presentation", "Strategic thinking", "Problem-solving", "Team collaboration", "Project management", "Technical skills", "Emotional intelligence", "Negotiation", "Decision-making", "Innovation and creativity", "Data analysis", "Customer relationship management", "Financial literacy"]
+          options: [
+            "Strategic Leadership & Management", "Technical & Analytical Expertise", "Communication & Relationship Building", "Innovation & Creative Problem‑Solving"
+          ]        
         }
       ]
     },
