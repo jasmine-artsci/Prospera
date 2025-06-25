@@ -75,9 +75,9 @@ def fetch_all_mentees_from_supabase() -> pd.DataFrame:
 
 # Define Weights (same as before)
 WEIGHTS = {
-    'goal_similarity': 0.45,
+    'goal_similarity': 0.55,
     'skills_match': 0.40,
-    'challenges_match': 0.35,
+    'challenges_match': 0.45,
     'country_match': 0.20,
     'canadian_landscape_match': 0.10,
     'english_level_match': 0.05,
@@ -214,15 +214,76 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
         })
 
     matches.sort(key=lambda x: x['total_score'], reverse=True)
-    return matches
+    return matches[:3]
 
-# --- Example Usage (Now fetching from Supabase using supabase-py) ---
+
+def store_matches_in_supabase(mentee_id: str, matches: list):
+    """
+    Stores the matching results for a single mentee into the mentee_mentor_matches table.
+    Deletes existing matches for the mentee before inserting new ones to prevent duplicates/stale data.
+    """
+    if not matches:
+        print(f"No matches to store for mentee ID: {mentee_id}")
+        return
+
+    try:
+        # 1. Delete existing matches for this mentee
+        print(f"Deleting existing matches for mentee ID: {mentee_id}...")
+        # For delete operations, the .execute() method either returns data (if rows were returned, though usually not for delete)
+        # or raises an exception on error. A successful delete typically means no exception is raised
+        # and 'data' will be empty or a list with no items.
+        delete_response = supabase_client.from_('mentee_mentor_matches').delete().eq('mentee_id',
+                                                                                     mentee_id).execute()
+
+        # Check if the deletion was successful by looking at the 'data' attribute or just assuming success if no error was raised
+        # If 'data' is an empty list, it usually indicates success for delete operations where no rows are returned.
+        # If it contains data, it means rows matching the delete condition were returned (e.g., if .returning('*') was used, which is not here).
+        if delete_response.data is not None:
+            print(f"Successfully deleted existing matches for mentee ID: {mentee_id}.")
+        else:
+            # This branch might indicate an unexpected response or partial success if 'data' is None
+            # but no exception was raised. For simple deletes, an empty list or None for 'data' implies success.
+            print(
+                f"Warning: Deletion for mentee ID {mentee_id} completed, but response was unexpected. Response data: {delete_response.data}")
+
+        # 2. Prepare data for insertion
+        records_to_insert = []
+        for rank, match in enumerate(matches):
+            records_to_insert.append({
+                'mentee_id': mentee_id,
+                'mentor_id': match['mentor_id'],
+                'match_score': match['total_score'],
+                'match_rank': rank + 1,  # Rank starts from 1
+                'generated_at': pd.Timestamp.now(tz='UTC').isoformat(),
+                # Store as ISO format string
+                'score_components': match['score_components']  # Store the detailed components
+            })
+
+        # 3. Insert new matches
+        print(f"Inserting {len(records_to_insert)} new matches for mentee ID: {mentee_id}...")
+        insert_response = supabase_client.from_('mentee_mentor_matches').insert(
+            records_to_insert).execute()
+
+        # For insert operations, insert_response.data will contain the inserted rows on success
+        if insert_response.data:
+            print(
+                f"Successfully stored {len(insert_response.data)} matches for mentee ID: {mentee_id}.")
+        else:
+            # This part would typically only be reached if .execute() didn't raise an error
+            # but returned empty data, which is unlikely for a successful insert of records.
+            print(
+                f"Error storing matches for mentee ID: {mentee_id}. Insert response data was empty.")
+
+    except Exception as e:
+        # This catches any exceptions raised by the Supabase client, including actual API errors
+        print(f"Error storing matches for mentee ID {mentee_id}: {e}")
+
+
 if __name__ == "__main__":
     print("\n--- Fetching data from Supabase ---")
 
-    # Fetch all mentors and mentees once at the beginning
     mentors_df_supabase = fetch_all_mentors_from_supabase()
-    mentees_df_supabase = fetch_all_mentees_from_supabase() # NEW: Fetch all mentees
+    mentees_df_supabase = fetch_all_mentees_from_supabase()
 
     if mentors_df_supabase.empty:
         print("No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
@@ -237,21 +298,24 @@ if __name__ == "__main__":
     print(mentees_df_supabase[['name', 'goal_target']].head())
 
 
-    # List of mentee names to test
-    mentee_names_to_test = ['Alex Wong', 'Priya Nair', 'Luis Herrera']
+    mentee_names_to_test = ['Alex Wong', 'Priya Nair', 'Luis Herrera', 'Fatima Khan', 'Carlos Silva']
 
     for mentee_name in mentee_names_to_test:
-        # Filter the fetched mentees DataFrame by name
         mentee_profiles = mentees_df_supabase[mentees_df_supabase['name'] == mentee_name]
 
         if not mentee_profiles.empty:
-            # Get the first matching profile (assuming names are unique or you want the first one)
             mentee_profile = mentee_profiles.iloc[0].to_dict()
+            mentee_id = str(mentee_profile['id']) # Get the mentee's actual UUID
 
-            print(f"\n--- Matching Mentee from Supabase: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_profile.get('id', 'N/A')}) ---")
+            print(f"\n--- Matching Mentee from Supabase: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
             supabase_matches = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
+
             for match in supabase_matches:
                 print(f"Mentor: {match['mentor_name']}, Score: {match['total_score']:.2f}")
                 # print(f"  Components: {match['score_components']}") # Uncomment for detailed scores
+
+            # --- THIS IS THE KEY CALL ---
+            store_matches_in_supabase(mentee_id, supabase_matches)
+
         else:
             print(f"Mentee with name '{mentee_name}' not found in Supabase data.")
