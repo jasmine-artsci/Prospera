@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 const EnhancedOnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
+  const router = useRouter();
 
   // Sample themes and questions for each step
   const stepData = [
@@ -249,6 +251,11 @@ const EnhancedOnboardingPage = () => {
 
     // Show success message
     alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
+    
+    // Redirect to profile page after successful completion
+    setTimeout(() => {
+      router.push('/profile');
+    }, 1000);
   };
 
   const handleInputChange = (questionId, value) => {
