@@ -2,7 +2,9 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
 
 const Header = ({
   aboutRef,
@@ -16,13 +18,32 @@ const Header = ({
       ref.current.scrollIntoView({ behavior: "smooth", block: "start" });
     }
   };
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleChangeLanguage = (lang) => {
-    i18n.changeLanguage(lang);
-  }
-    
+  useEffect(()=>{
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user);
+      setLoading(false);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user || null);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [])
+  
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    location.reload(); 
+  };
+
   const [isAnimating, setIsAnimating] = useState(false);
 
+  const router = useRouter();
 
   return (
     <header className="sticky top-0 backdrop-blur-sm bg-green-700/40 z-20">
@@ -52,6 +73,7 @@ const Header = ({
             <span className="cursor-default text-lg text-black">Prospéra</span>
           </div>
           <nav className="flex flex-col md:flex-row md:justify-center gap-3 md:gap-8 text-black/80 items-center">
+          <div className="flex flex-row gap-10">
             <div className="flex gap-3 md:gap-6">
               <button
                 onClick={() => scrollToSection(aboutRef)}
@@ -80,12 +102,15 @@ const Header = ({
             </div>
 
             <div className="">
-              <Link href="/onboarding">
+              <Link href="/sign-up">
                 <button onMouseOver={()=>setIsAnimating(true)} onMouseOut={()=>setIsAnimating(false)} className={`${isAnimating ? "shadow-2xl" : "shadow-none"} hover:border-transparent relative items-center overflow-hidden px-3.5 py-1.5 bg-black/80 text-white rounded-xl font-semibold cursor-pointer`}>
                     <span className={`absolute inset-0 bg-emerald-700 scale-0 origin-center rounded-full transition-transform duration-400 transform ${isAnimating ? 'scale-110 ' : "scale-0"}`}></span>
                     <span className="relative z-10">Get Started</span>
                 </button>
-              </Link>
+                )
+              )
+              }
+            </div>
             </div>
           </nav>
         </div>

@@ -1,170 +1,28 @@
 "use client";
 
 import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import stepData from './stepData';
+import { useRouter } from "next/navigation";
+import DatePicker from "./DatePicker";
 
-const EnhancedOnboardingPage = () => {
+const EnhancedOnboardingPage = ({ role, name, id }) => {
+  const [selectedDates, setSelectedDates] = useState([]);
+
+  const handleDateChange = (newDates) => {
+    setSelectedDates(newDates);
+    console.log("Received in parent:", newDates);
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
 
+  const router = useRouter();
   // Sample themes and questions for each step
-  const stepData = [
-    {
-      step: 1,
-      theme: "Personal Background",
-      questions: [
-        {
-          id: "q1",
-          question: "Country/region of origin.",
-          type: "searchable-dropdown",
-          options: ["Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh", "Belgium", "Brazil", "Canada", "Chile", "China", "Colombia", "Denmark", "Egypt", "Finland", "France", "Germany", "Ghana", "Greece", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Italy", "Japan", "Jordan", "Kenya", "South Korea", "Lebanon", "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan", "Philippines", "Poland", "Portugal", "Russia", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine", "United Kingdom", "United States", "Venezuela", "Vietnam"]
-        },
-        {
-          id: "q2", 
-          question: "Rate your business‑English proficiency (CEFR).",
-          type: "select",
-          options: ["A1 (Beginner)", "A2 (Elementary)", "B1 (Intermediate)", "B2 (Upper-Intermediate)", "C1 (Advanced)", "C2 (Proficient)"]
-        },
-        {
-          id: "q3",
-          question: "Which part of the Canadian professional landscape still feels unclear?",
-          type: "multi-select",
-          options: ["Workplace culture and etiquette", "Networking and relationship building", "Career progression pathways", "Industry-specific regulations", "Professional certifications and licensing", "Salary negotiation", "Job search strategies", "Interview processes", "Professional communication styles", "Work-life balance expectations", "Leadership and management styles", "Diversity and inclusion practices"]
-        }
-      ]
-    },
-    {
-      step: 2,
-      theme: "Personality and Work Style",
-      questions: [
-        {
-          id: "q4",
-          question: "I see myself as someone who is extraverted, enthusiastic.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        },
-        {
-          id: "q5",
-          question: "I see myself as someone who is dependable, self‑disciplined.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        },
-        {
-          id: "q6",
-          question: "I see myself as someone who is open to new experiences, complex.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        }
-      ]
-    },
-    {
-      step: 3,
-      theme: "Career Goals and Values",
-      questions: [
-        {
-          id: "q7",
-          question: "Briefly describe your next job target or promotion goal.",
-          type: "short-text",
-          maxLength: 200,
-          placeholder: "Describe your immediate career objective (max 200 characters)..."
-        },
-        {
-          id: "q8",
-          question: "Pick your top three professional values (rank by importance).",
-          type: "dropdown-ranking",
-          options: ["Work-life balance", "Career advancement", "Financial security", "Creative freedom", "Social impact", "Team collaboration", "Leadership opportunities", "Continuous learning", "Job stability", "Innovation", "Recognition", "Autonomy"]
-        },
-        {
-          id: "q9",
-          question: "I remain relaxed in most situations.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        }
-      ]
-    },
-    {
-      step: 4,
-      theme: "Challenges and Development Areas",
-      questions: [
-        {
-          id: "q10",
-          question: "Identify up to three barriers you face.",
-          type: "dropdown-input",
-          maxSelections: 3,
-          options: ["Language barriers", "Cultural differences", "Lack of Canadian experience", "Professional network gaps", "Credential recognition", "Technical skills gap", "Soft skills development", "Time management", "Confidence building", "Other (please specify)"]
-        },
-        {
-          id: "q11",
-          question: "What is your biggest career challenge today?",
-          type: "multi-select",
-          options: ["Finding relevant job opportunities", "Building professional networks", "Developing leadership skills", "Improving communication", "Advancing in current role", "Changing career paths", "Balancing work and personal life", "Managing workplace stress", "Learning new technologies", "Understanding organizational politics"]
-        },
-        {
-          id: "q12",
-          question: "Select the top 3 competencies you want to develop.",
-          type: "multi-select",
-          maxSelections: 3,
-          options: ["Leadership and management", "Communication and presentation", "Strategic thinking", "Problem-solving", "Team collaboration", "Project management", "Technical skills", "Emotional intelligence", "Negotiation", "Decision-making", "Innovation and creativity", "Data analysis", "Customer relationship management", "Financial literacy"]
-        }
-      ]
-    },
-    {
-      step: 5,
-      theme: "Communication Preferences",
-      questions: [
-        {
-          id: "q13",
-          question: "Preferred communication channel for mentoring sessions.",
-          type: "likert-options",
-          options: [
-            { label: "In-person meetings", scale: 5 },
-            { label: "Video calls", scale: 5 },
-            { label: "Phone calls", scale: 5 },
-            { label: "Text/Chat messaging", scale: 5 },
-            { label: "Email exchanges", scale: 5 }
-          ]
-        },
-        {
-          id: "q14",
-          question: "Which feedback style helps you most?",
-          type: "radio",
-          options: ["Direct (straightforward, specific feedback)", "Coaching (guided questions to help you discover solutions)", "Socratic (thought-provoking questions to develop critical thinking)", "Appreciative (focusing on strengths and positive reinforcement)"]
-        },
-        {
-          id: "q15",
-          question: "Select up to three weekly time windows you can meet.",
-          type: "time-selector",
-          maxSelections: 3,
-          options: [
-            "Monday Morning (9am-12pm)",
-            "Monday Afternoon (1pm-5pm)",
-            "Monday Evening (6pm-9pm)",
-            "Tuesday Morning (9am-12pm)",
-            "Tuesday Afternoon (1pm-5pm)",
-            "Tuesday Evening (6pm-9pm)",
-            "Wednesday Morning (9am-12pm)",
-            "Wednesday Afternoon (1pm-5pm)",
-            "Wednesday Evening (6pm-9pm)",
-            "Thursday Morning (9am-12pm)",
-            "Thursday Afternoon (1pm-5pm)",
-            "Thursday Evening (6pm-9pm)",
-            "Friday Morning (9am-12pm)",
-            "Friday Afternoon (1pm-5pm)",
-            "Friday Evening (6pm-9pm)",
-            "Saturday Morning (9am-12pm)",
-            "Saturday Afternoon (1pm-5pm)",
-            "Sunday Morning (9am-12pm)",
-            "Sunday Afternoon (1pm-5pm)"
-          ]
-        }
-      ]
-    }
-  ];
+
 
   const [formData, setFormData] = useState({});
+  const [error, setError] = useState("");
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -185,35 +43,37 @@ const EnhancedOnboardingPage = () => {
       totalSteps: totalSteps,
       responses: {
         personalBackground: {
-          countryOfOrigin: formData.q1 || null,
-          englishProficiency: formData.q2 || null,
-          unclearAspects: formData.q3 || []
+          origin: formData.q1 || null,
+          english_cefr: formData.q2 || null,
+          unclear_canadian_landscape: formData.q3 || [],
+          industry: formData.q4 || [],
+          department: formData.q5 || [],
         },
         personalityAndWorkStyle: {
-          extravertedEnthusiastic: formData.q4 || null,
-          dependableSelfDisciplined: formData.q5 || null,
-          openToNewExperiences: formData.q6 || null
+          extraversion: formData.q6 || null,
+          conscientiousness: formData.q7 || null,
+          openness: formData.q8 || null
         },
         careerGoalsAndValues: {
-          nextJobTarget: formData.q7 || null,
-          professionalValuesRanking: formData.q8 || [],
-          remainsRelaxed: formData.q9 || null
+          goal_target: formData.q9 || null,
+          values: formData.q10 || [],
+          emotional_stability: formData.q11 || null
         },
         challengesAndDevelopment: {
-          barriersYouFace: formData.q10 || [],
-          biggestCareerChallenge: formData.q11 || [],
-          competenciesToDevelop: formData.q12 || []
+          barriers_faced: formData.q12 || [],
+          current_challenges: formData.q13 || [],
+          skills_to_develop: formData.q14 || []
         },
         communicationPreferences: {
-          preferredChannels: {
-            inPersonMeetings: formData.q13_0 || null,
-            videoCalls: formData.q13_1 || null,
-            phoneCalls: formData.q13_2 || null,
-            textChatMessaging: formData.q13_3 || null,
-            emailExchanges: formData.q13_4 || null
+          preferred_channel: {
+            inPersonMeetings: formData.q15_0 || null,
+            videoCalls: formData.q15_1 || null,
+            phoneCalls: formData.q15_2 || null,
+            textChatMessaging: formData.q15_3 || null,
+            emailExchanges: formData.q15_4 || null
           },
-          feedbackStyle: formData.q14 || null,
-          availableTimeSlots: formData.q15 || []
+          feedback_style: formData.q16 || null,
+          availability: selectedDates || []
         }
       },
       rawFormData: formData,
@@ -247,8 +107,44 @@ const EnhancedOnboardingPage = () => {
     console.log("\n=== COMPLETION STATS ===");
     console.log(onboardingData.completionStats);
 
+    const fetchData = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      const payload = {
+        ...onboardingData.responses.personalBackground,
+        ...onboardingData.responses.personalityAndWorkStyle,
+        ...onboardingData.responses.careerGoalsAndValues,
+        ...onboardingData.responses.challengesAndDevelopment,
+        ...onboardingData.responses.communicationPreferences,
+      };
+      console.log(payload);
+
+      if(role === "mentee"){
+        console.log("I AM IN MENTEES");
+        console.log("USER ID::::", user.id);
+        const {data, error} = await supabase
+          .from('mentees')
+          .upsert({ id: user.id, name: name, ...payload }, {onConflict: "id"});
+        setError(error);
+      }
+      else if(role === "mentor"){
+        console.log("I AM IN MENTORS");
+        console.log("USER ID::::", user.id);
+        const {data, error} = await supabase
+          .from('mentors')
+          .upsert({ id: user.id, name: name, ...payload }, {onConflict: "id"});
+        setError(error);
+      }
+
+      if (error) console.error('❌ Upsert failed:', error);
+
+    }
+
+    fetchData();
+
+    router.push("/");
     // Show success message
-    alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
+    // alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
   };
 
   const handleInputChange = (questionId, value) => {
@@ -263,10 +159,10 @@ const EnhancedOnboardingPage = () => {
   return (
     <div className="min-h-screen bg-gray-200 flex">
       {/* Left Sidebar - Step Navigation */}
-      <div className="w-80 bg-gray-300 p-8 shadow-lg">
+      <div className="w-80 bg-gray-300 p-8 shadow-lg sticky top-0 h-screen overflow-y-auto">
         <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">Welcome to Prospéra</h2>
-          <p className="text-gray-600 text-sm">Complete your profile to get matched with the perfect mentor</p>
+          <h2 className="text-3xl font-bold text-gray-800 mb-4">Hello <span className="text-emerald-600">{name}</span>!</h2>
+          <p className="text-gray-600 text-md">Complete your profile to get matched with the perfect mentor</p>
         </div>
 
         {/* Step Navigation Buttons */}
@@ -333,7 +229,7 @@ const EnhancedOnboardingPage = () => {
           <div className="flex justify-between items-center">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">
-                Theme {currentStep}
+                {currentStepData.theme} - {role}
               </h1>
               <div className="w-20 h-1 bg-black mt-2"></div>
             </div>
@@ -350,7 +246,7 @@ const EnhancedOnboardingPage = () => {
           {currentStepData?.questions.map((question, index) => (
             <div key={question.id}>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
-                Question {index + 1} about {currentStepData.theme}
+                Question {index + 1}
               </h2>
               <div className="bg-gray-100 rounded-lg p-6 min-h-[120px] flex items-center mb-4">
                 <p className="text-gray-700 text-lg">
@@ -432,9 +328,9 @@ const EnhancedOnboardingPage = () => {
                 {/* Likert Scale */}
                 {question.type === "likert" && (
                   <div className="space-y-4">
-                    <div className="flex justify-between items-center">
+                    <div className="flex justify-start items-center">
                       {question.labels.map((label, labelIndex) => (
-                        <label key={labelIndex} className="flex flex-col items-center space-y-2 cursor-pointer">
+                        <label key={labelIndex} className="flex flex-col mx-15 items-center space-y-2 cursor-pointer">
                           <input
                             type="radio"
                             name={question.id}
@@ -442,6 +338,7 @@ const EnhancedOnboardingPage = () => {
                             className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500"
                             checked={formData[question.id] == labelIndex + 1}
                             onChange={(e) => handleInputChange(question.id, parseInt(e.target.value))}
+                            required
                           />
                           <span className="text-sm text-gray-600 text-center">{label}</span>
                           <span className="text-xs text-gray-400">{labelIndex + 1}</span>
@@ -461,6 +358,7 @@ const EnhancedOnboardingPage = () => {
                       placeholder={question.placeholder}
                       value={formData[question.id] || ""}
                       onChange={(e) => handleInputChange(question.id, e.target.value)}
+                      required
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       {(formData[question.id] || "").length}/{question.maxLength} characters
@@ -556,9 +454,9 @@ const EnhancedOnboardingPage = () => {
                     {question.options.map((option, optIndex) => (
                       <div key={optIndex} className="space-y-2">
                         <label className="block text-gray-700 font-medium">{option.label}</label>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-start items-center">
                           {[1, 2, 3, 4, 5].map((value) => (
-                            <label key={value} className="flex flex-col items-center space-y-1 cursor-pointer">
+                            <label key={value} className="flex flex-col mx-15 items-center space-y-1 cursor-pointer">
                               <input
                                 type="radio"
                                 name={`${question.id}_${optIndex}`}
@@ -566,6 +464,7 @@ const EnhancedOnboardingPage = () => {
                                 className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500"
                                 checked={formData[`${question.id}_${optIndex}`] == value}
                                 onChange={(e) => handleInputChange(`${question.id}_${optIndex}`, parseInt(e.target.value))}
+                                required
                               />
                               <span className="text-xs text-gray-400">{value}</span>
                             </label>
@@ -588,6 +487,7 @@ const EnhancedOnboardingPage = () => {
                           className="w-4 h-4 text-emerald-600 border-gray-300 focus:ring-emerald-500"
                           checked={formData[question.id] === option}
                           onChange={(e) => handleInputChange(question.id, e.target.value)}
+                          required
                         />
                         <span className="text-gray-700">{option}</span>
                       </label>
@@ -597,36 +497,39 @@ const EnhancedOnboardingPage = () => {
 
                 {/* Time Selector */}
                 {question.type === "time-selector" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {question.options.map((timeSlot, optIndex) => (
-                      <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                          checked={(formData[question.id] || []).includes(timeSlot)}
-                          onChange={(e) => {
-                            const currentValues = formData[question.id] || [];
-                            let newValues;
-                            if (e.target.checked) {
-                              newValues = [...currentValues, timeSlot];
-                            } else {
-                              newValues = currentValues.filter(v => v !== timeSlot);
-                            }
-                            if (question.maxSelections && newValues.length > question.maxSelections) {
-                              newValues = newValues.slice(-question.maxSelections);
-                            }
-                            handleInputChange(question.id, newValues);
-                          }}
-                        />
-                        <span className="text-gray-700 text-sm">{timeSlot}</span>
-                      </label>
-                    ))}
-                    {question.maxSelections && (
-                      <p className="text-sm text-gray-500 col-span-full mt-2">
-                        Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
-                      </p>
-                    )}
-                  </div>
+                  <DatePicker onChange={handleDateChange} />
+                  // <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  //   {question.options.map((timeSlot, optIndex) => (
+                  //     <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
+                  //       <input
+                  //         type="checkbox"
+                  //         className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                  //         checked={(formData[question.id] || []).includes(timeSlot)}
+                  //         onChange={(e) => {
+                  //           const currentValues = formData[question.id] || [];
+                  //           let newValues;
+                  //           if (e.target.checked) {
+                  //             newValues = [...currentValues, timeSlot];
+                  //           } else {
+                  //             newValues = currentValues.filter(v => v !== timeSlot);
+                  //           }
+                  //           if (question.maxSelections && newValues.length > question.maxSelections) {
+                  //             newValues = newValues.slice(-question.maxSelections);
+                  //           }
+                  //           console.log("QUESTIONS>ID:::", question.id);
+                  //           handleInputChange(question.id, newValues);
+                  //         }}
+                  //         required
+                  //       />
+                  //       <span className="text-gray-700 text-sm">{timeSlot}</span>
+                  //     </label>
+                  //   ))}
+                  //   {question.maxSelections && (
+                  //     <p className="text-sm text-gray-500 col-span-full mt-2">
+                  //       Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
+                  //     </p>
+                  //   )}
+                  // </div>
                 )}
               </div>
             </div>
