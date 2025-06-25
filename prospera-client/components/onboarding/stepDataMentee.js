@@ -1,17 +1,17 @@
-const stepData = [
+const stepDataMentee = [
     {
       step: 1,
       theme: "Personal Background",
       questions: [
         {
           id: "q1",
-          question: "Country/region of origin.",
+          question: "What's your country/region of origin?",
           type: "select",
           options: ["Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh", "Belgium", "Brazil", "Canada", "Chile", "China", "Colombia", "Denmark", "Egypt", "Finland", "France", "Germany", "Ghana", "Greece", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Italy", "Japan", "Jordan", "Kenya", "South Korea", "Lebanon", "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan", "Philippines", "Poland", "Portugal", "Russia", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine", "United Kingdom", "United States", "Venezuela", "Vietnam"]
         },
         {
           id: "q2", 
-          question: "Rate your business‑English proficiency (CEFR).",
+          question: "How'd you rate your business‑English proficiency (CEFR)?",
           type: "select",
           options: ["A1 (Beginner)", "A2 (Elementary)", "B1 (Intermediate)", "B2 (Upper-Intermediate)", "C1 (Advanced)", "C2 (Proficient)"]
         },
@@ -144,14 +144,14 @@ const stepData = [
       questions: [
         {
           id: "q15",
-          question: "Preferred communication channel for mentoring sessions.",
-          type: "likert-options",
+          question: "What's your preferred communication channel for mentoring sessions?",
+          type: "multi-bool-options",
           options: [
-            { label: "In-person meetings", scale: 5 },
-            { label: "Video calls", scale: 5 },
-            { label: "Phone calls", scale: 5 },
-            { label: "Text/Chat messaging", scale: 5 },
-            { label: "Email exchanges", scale: 5 }
+            { label: "In-person meetings", key: "inPersonMeetings" },
+            { label: "Video calls", key: "videoCalls" },
+            { label: "Phone calls", key: "phoneCalls" },
+            { label: "Text/Chat messaging", key: "textChatMessaging" },
+            { label: "Email exchanges", key: "emailExchanges" }
           ]
         },
         {
@@ -163,7 +163,7 @@ const stepData = [
         {
           id: "q17",
           question: "Select up to three weekly time windows you can meet.",
-          type: "time-selector",
+          type: "multi-select-dropdown",
           maxSelections: 3,
           options: [
             "Monday Morning (9am-12pm)",
@@ -191,4 +191,4 @@ const stepData = [
     }
   ];
 
-export default stepData;
+export default stepDataMentee;
