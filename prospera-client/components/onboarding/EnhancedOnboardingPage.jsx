@@ -2,171 +2,27 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
+import stepData from './stepData';
+import { useRouter } from "next/navigation";
+import DatePicker from "./DatePicker";
 
+const EnhancedOnboardingPage = ({ role, name, id }) => {
+  const [selectedDates, setSelectedDates] = useState([]);
 
-const EnhancedOnboardingPage = ({ role, name }) => {
+  const handleDateChange = (newDates) => {
+    setSelectedDates(newDates);
+    console.log("Received in parent:", newDates);
+  };
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
 
+  const router = useRouter();
   // Sample themes and questions for each step
-  const stepData = [
-    {
-      step: 1,
-      theme: "Personal Background",
-      questions: [
-        {
-          id: "q1",
-          question: "Country/region of origin.",
-          type: "select",
-          options: ["Afghanistan", "Albania", "Algeria", "Argentina", "Australia", "Austria", "Bangladesh", "Belgium", "Brazil", "Canada", "Chile", "China", "Colombia", "Denmark", "Egypt", "Finland", "France", "Germany", "Ghana", "Greece", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Italy", "Japan", "Jordan", "Kenya", "South Korea", "Lebanon", "Malaysia", "Mexico", "Morocco", "Netherlands", "Nigeria", "Norway", "Pakistan", "Philippines", "Poland", "Portugal", "Russia", "Saudi Arabia", "South Africa", "Spain", "Sri Lanka", "Sweden", "Switzerland", "Thailand", "Turkey", "Ukraine", "United Kingdom", "United States", "Venezuela", "Vietnam"]
-        },
-        {
-          id: "q2", 
-          question: "Rate your business‑English proficiency (CEFR).",
-          type: "select",
-          options: ["A1 (Beginner)", "A2 (Elementary)", "B1 (Intermediate)", "B2 (Upper-Intermediate)", "C1 (Advanced)", "C2 (Proficient)"]
-        },
-        {
-          id: "q3",
-          question: "Which part of the Canadian professional landscape still feels unclear?",
-          type: "multi-select",
-          options: ["Workplace culture and etiquette", "Networking and relationship building", "Career progression pathways", "Industry-specific regulations", "Professional certifications and licensing", "Salary negotiation", "Job search strategies", "Interview processes", "Professional communication styles", "Work-life balance expectations", "Leadership and management styles", "Diversity and inclusion practices"]
-        }
-      ]
-    },
-    {
-      step: 2,
-      theme: "Personality and Work Style",
-      questions: [
-        {
-          id: "q4",
-          question: "I see myself as someone who is extraverted, enthusiastic.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        },
-        {
-          id: "q5",
-          question: "I see myself as someone who is dependable, self‑disciplined.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        },
-        {
-          id: "q6",
-          question: "I see myself as someone who is open to new experiences, complex.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        }
-      ]
-    },
-    {
-      step: 3,
-      theme: "Career Goals and Values",
-      questions: [
-        {
-          id: "q7",
-          question: "Briefly describe your next job target or promotion goal.",
-          type: "short-text",
-          maxLength: 200,
-          placeholder: "Describe your immediate career objective (max 200 characters)..."
-        },
-        {
-          id: "q8",
-          question: "Pick your top three professional values (rank by importance).",
-          type: "dropdown-ranking",
-          options: ["Work-life balance", "Career advancement", "Financial security", "Creative freedom", "Social impact", "Team collaboration", "Leadership opportunities", "Continuous learning", "Job stability", "Innovation", "Recognition", "Autonomy"]
-        },
-        {
-          id: "q9",
-          question: "I remain relaxed in most situations.",
-          type: "likert",
-          scale: 5,
-          labels: ["Strongly Disagree", "Disagree", "Neutral", "Agree", "Strongly Agree"]
-        }
-      ]
-    },
-    {
-      step: 4,
-      theme: "Challenges and Development Areas",
-      questions: [
-        {
-          id: "q10",
-          question: "Identify up to three barriers you face.",
-          type: "dropdown-input",
-          maxSelections: 3,
-          options: ["Language barriers", "Cultural differences", "Lack of Canadian experience", "Professional network gaps", "Credential recognition", "Technical skills gap", "Soft skills development", "Time management", "Confidence building", "Other (please specify)"]
-        },
-        {
-          id: "q11",
-          question: "What is your biggest career challenge today?",
-          type: "multi-select",
-          options: ["Finding relevant job opportunities", "Building professional networks", "Developing leadership skills", "Improving communication", "Advancing in current role", "Changing career paths", "Balancing work and personal life", "Managing workplace stress", "Learning new technologies", "Understanding organizational politics"]
-        },
-        {
-          id: "q12",
-          question: "Select the top 3 competencies you want to develop.",
-          type: "multi-select",
-          maxSelections: 3,
-          options: ["Leadership and management", "Communication and presentation", "Strategic thinking", "Problem-solving", "Team collaboration", "Project management", "Technical skills", "Emotional intelligence", "Negotiation", "Decision-making", "Innovation and creativity", "Data analysis", "Customer relationship management", "Financial literacy"]
-        }
-      ]
-    },
-    {
-      step: 5,
-      theme: "Communication Preferences",
-      questions: [
-        {
-          id: "q13",
-          question: "Preferred communication channel for mentoring sessions.",
-          type: "likert-options",
-          options: [
-            { label: "In-person meetings", scale: 5 },
-            { label: "Video calls", scale: 5 },
-            { label: "Phone calls", scale: 5 },
-            { label: "Text/Chat messaging", scale: 5 },
-            { label: "Email exchanges", scale: 5 }
-          ]
-        },
-        {
-          id: "q14",
-          question: "Which feedback style helps you most?",
-          type: "radio",
-          options: ["Direct (straightforward, specific feedback)", "Coaching (guided questions to help you discover solutions)", "Socratic (thought-provoking questions to develop critical thinking)", "Appreciative (focusing on strengths and positive reinforcement)"]
-        },
-        {
-          id: "q15",
-          question: "Select up to three weekly time windows you can meet.",
-          type: "time-selector",
-          maxSelections: 3,
-          options: [
-            "Monday Morning (9am-12pm)",
-            "Monday Afternoon (1pm-5pm)",
-            "Monday Evening (6pm-9pm)",
-            "Tuesday Morning (9am-12pm)",
-            "Tuesday Afternoon (1pm-5pm)",
-            "Tuesday Evening (6pm-9pm)",
-            "Wednesday Morning (9am-12pm)",
-            "Wednesday Afternoon (1pm-5pm)",
-            "Wednesday Evening (6pm-9pm)",
-            "Thursday Morning (9am-12pm)",
-            "Thursday Afternoon (1pm-5pm)",
-            "Thursday Evening (6pm-9pm)",
-            "Friday Morning (9am-12pm)",
-            "Friday Afternoon (1pm-5pm)",
-            "Friday Evening (6pm-9pm)",
-            "Saturday Morning (9am-12pm)",
-            "Saturday Afternoon (1pm-5pm)",
-            "Sunday Morning (9am-12pm)",
-            "Sunday Afternoon (1pm-5pm)"
-          ]
-        }
-      ]
-    }
-  ];
+
 
   const [formData, setFormData] = useState({});
+  const [error, setError] = useState("");
 
   const handleNext = () => {
     if (currentStep < totalSteps) {
@@ -189,33 +45,35 @@ const EnhancedOnboardingPage = ({ role, name }) => {
         personalBackground: {
           origin: formData.q1 || null,
           english_cefr: formData.q2 || null,
-          unclear_canadian_landscape: formData.q3 || []
+          unclear_canadian_landscape: formData.q3 || [],
+          industry: formData.q4 || [],
+          department: formData.q5 || [],
         },
         personalityAndWorkStyle: {
-          extraversion: formData.q4 || null,
-          conscientiousness: formData.q5 || null,
-          openness: formData.q6 || null
+          extraversion: formData.q6 || null,
+          conscientiousness: formData.q7 || null,
+          openness: formData.q8 || null
         },
         careerGoalsAndValues: {
-          goal_target: formData.q7 || null,
-          values: formData.q8 || [],
-          emotional_stability: formData.q9 || null
+          goal_target: formData.q9 || null,
+          values: formData.q10 || [],
+          emotional_stability: formData.q11 || null
         },
         challengesAndDevelopment: {
-          barriers_faced: formData.q10 || [],
-          current_challenges: formData.q11 || [],
-          skills_to_develop: formData.q12 || []
+          barriers_faced: formData.q12 || [],
+          current_challenges: formData.q13 || [],
+          skills_to_develop: formData.q14 || []
         },
         communicationPreferences: {
           preferred_channel: {
-            inPersonMeetings: formData.q13_0 || null,
-            videoCalls: formData.q13_1 || null,
-            phoneCalls: formData.q13_2 || null,
-            textChatMessaging: formData.q13_3 || null,
-            emailExchanges: formData.q13_4 || null
+            inPersonMeetings: formData.q15_0 || null,
+            videoCalls: formData.q15_1 || null,
+            phoneCalls: formData.q15_2 || null,
+            textChatMessaging: formData.q15_3 || null,
+            emailExchanges: formData.q15_4 || null
           },
-          feedback_style: formData.q14 || null,
-          availability: formData.q15 || []
+          feedback_style: formData.q16 || null,
+          availability: selectedDates || []
         }
       },
       rawFormData: formData,
@@ -261,19 +119,30 @@ const EnhancedOnboardingPage = ({ role, name }) => {
       };
       console.log(payload);
 
-      // console.log(role);
       if(role === "mentee"){
         console.log("I AM IN MENTEES");
         console.log("USER ID::::", user.id);
         const {data, error} = await supabase
           .from('mentees')
           .upsert({ id: user.id, name: name, ...payload }, {onConflict: "id"});
-          
-          if (error) console.error('❌ Upsert failed:', error);
+        setError(error);
       }
+      else if(role === "mentor"){
+        console.log("I AM IN MENTORS");
+        console.log("USER ID::::", user.id);
+        const {data, error} = await supabase
+          .from('mentors')
+          .upsert({ id: user.id, name: name, ...payload }, {onConflict: "id"});
+        setError(error);
+      }
+
+      if (error) console.error('❌ Upsert failed:', error);
+
     }
 
     fetchData();
+
+    router.push("/");
     // Show success message
     // alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
   };
@@ -628,37 +497,39 @@ const EnhancedOnboardingPage = ({ role, name }) => {
 
                 {/* Time Selector */}
                 {question.type === "time-selector" && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    {question.options.map((timeSlot, optIndex) => (
-                      <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
-                        <input
-                          type="checkbox"
-                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                          checked={(formData[question.id] || []).includes(timeSlot)}
-                          onChange={(e) => {
-                            const currentValues = formData[question.id] || [];
-                            let newValues;
-                            if (e.target.checked) {
-                              newValues = [...currentValues, timeSlot];
-                            } else {
-                              newValues = currentValues.filter(v => v !== timeSlot);
-                            }
-                            if (question.maxSelections && newValues.length > question.maxSelections) {
-                              newValues = newValues.slice(-question.maxSelections);
-                            }
-                            handleInputChange(question.id, newValues);
-                          }}
-                          required
-                        />
-                        <span className="text-gray-700 text-sm">{timeSlot}</span>
-                      </label>
-                    ))}
-                    {question.maxSelections && (
-                      <p className="text-sm text-gray-500 col-span-full mt-2">
-                        Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
-                      </p>
-                    )}
-                  </div>
+                  <DatePicker onChange={handleDateChange} />
+                  // <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  //   {question.options.map((timeSlot, optIndex) => (
+                  //     <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
+                  //       <input
+                  //         type="checkbox"
+                  //         className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                  //         checked={(formData[question.id] || []).includes(timeSlot)}
+                  //         onChange={(e) => {
+                  //           const currentValues = formData[question.id] || [];
+                  //           let newValues;
+                  //           if (e.target.checked) {
+                  //             newValues = [...currentValues, timeSlot];
+                  //           } else {
+                  //             newValues = currentValues.filter(v => v !== timeSlot);
+                  //           }
+                  //           if (question.maxSelections && newValues.length > question.maxSelections) {
+                  //             newValues = newValues.slice(-question.maxSelections);
+                  //           }
+                  //           console.log("QUESTIONS>ID:::", question.id);
+                  //           handleInputChange(question.id, newValues);
+                  //         }}
+                  //         required
+                  //       />
+                  //       <span className="text-gray-700 text-sm">{timeSlot}</span>
+                  //     </label>
+                  //   ))}
+                  //   {question.maxSelections && (
+                  //     <p className="text-sm text-gray-500 col-span-full mt-2">
+                  //       Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
+                  //     </p>
+                  //   )}
+                  // </div>
                 )}
               </div>
             </div>

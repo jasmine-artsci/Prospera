@@ -38,6 +38,7 @@ export default function SignupPage() {
     await supabase.from('users').insert({
       auth_id: userId,
       name: name,
+      email: email
     });
 
     router.push(`/onboarding?auth_id=${userId}`);

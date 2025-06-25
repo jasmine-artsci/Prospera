@@ -11,6 +11,7 @@ import { useState, useEffect } from 'react';
     const [role, setRole] = useState(null);
     const [name, setName] = useState("");
     const [error, setError] = useState(null);
+    const [id, setId] = useState("");
 
     useEffect(() => {
         const fetchData = async () => {
@@ -31,6 +32,8 @@ import { useState, useEffect } from 'react';
                 setError(error.message);
                 return;
             }
+            
+            if(user.id) setId(user.id);
 
             if(userData.role) setRole(userData.role);
             else setError("Couldn't get the user's role");
@@ -55,7 +58,7 @@ import { useState, useEffect } from 'react';
     }
 
 
-    return <EnhancedOnboardingPage role={role} name={name} />;
+    return <EnhancedOnboardingPage role={role} name={name} id={id} />;
 }
 
 export default Mentee
