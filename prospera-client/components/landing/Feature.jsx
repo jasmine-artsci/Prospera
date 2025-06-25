@@ -107,13 +107,15 @@ const Feature = () => {
             onMouseLeave={() => setHoveredButton(null)}
             className={`group relative px-8 py-4 bg-white text-emerald-600 font-semibold rounded-xl text-lg border-2 border-emerald-600 transition-all duration-300 ${
               hoveredButton === 'become' 
-                ? 'shadow-2xl transform scale-105 bg-emerald-600 text-white' 
+                ? 'shadow-2xl transform scale-105 bg-emerald-600' 
                 : 'shadow-lg hover:shadow-xl hover:bg-emerald-50'
             }`}
           >
-            <span className="flex items-center gap-2">
+            <span className={`flex items-center gap-2 ${
+              hoveredButton === 'become' ? 'text-emerald-600' : ''
+            }`}>
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001-1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
+                <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 011 1v2a1 1 0 01-1 1H4a1 1 0 01-1-1V4zM3 10a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H4a1 1 0 01-1-1v-6zM14 9a1 1 0 00-1 1v6a1 1 0 001 1h2a1 1 0 001 1v-6a1 1 0 00-1-1h-2z" clipRule="evenodd" />
               </svg>
               Become a Mentor
             </span>
