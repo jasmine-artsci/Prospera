@@ -28,15 +28,6 @@ const About = () => {
                 Join thousands of newcomers who have found their footing in Canada with the help of our dedicated mentor community. Your success story starts here.
               </p>
             </div>
-            
-            <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button className="px-6 py-3 bg-emerald-600 text-white rounded-lg font-semibold hover:bg-emerald-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                Learn More
-              </button>
-              <button className="px-6 py-3 border-2 border-emerald-600 text-emerald-600 rounded-lg font-semibold hover:bg-emerald-600 hover:text-white transition-all duration-300">
-                Get Started
-              </button>
-            </div>
           </div>
           
           {/* Right Half - Image with Fade Effect */}
