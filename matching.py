@@ -14,6 +14,7 @@ load_dotenv()
 # Configure Gemini API for Embeddings (GENERATION_MODEL config is now in why_match.py)
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
+    logging.error("GEMINI_API_KEY not found. Please set it in your .env file.")
     raise ValueError("GEMINI_API_KEY not found. Please set it in your .env file.")
 genai.configure(api_key=api_key)
 
@@ -24,6 +25,7 @@ SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
 if not SUPABASE_URL or not SUPABASE_KEY:
+    logging.error("SUPABASE_URL or SUPABASE_KEY not set. Please check your .env file.")
     raise ValueError("SUPABASE_URL or SUPABASE_KEY not set. Please check your .env file.")
 
 
@@ -73,32 +75,35 @@ def fetch_all_mentees_from_supabase() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-# Define Weights (same as before)
+# Define Weights (UPDATED: Added industry_match and department_match)
 WEIGHTS = {
-    'goal_similarity': 0.45,
-    'skills_match': 0.40,
-    'challenges_match': 0.35,
-    'country_match': 0.20,
-    'canadian_landscape_match': 0.10,
+    'goal_similarity': 0.20, # Reduced to make room for new weights
+    'skills_match': 0.15,    # Reduced
+    'challenges_match': 0.15,  # Reduced
+    'country_match': 0.05,
+    'canadian_landscape_match': 0.05,
     'english_level_match': 0.05,
     'preferred_channel_match': 0.05,
-    'personality_extraversion': 0.02,
+    'personality_extraversion': 0.02, # Remain low, as they are individual components of overall personality
     'personality_conscientiousness': 0.02,
     'personality_emotional_stability': 0.02,
     'personality_openness': 0.02,
     'feedback_style_match': 0.05,
-    'availability_match': 0.20,
+    'availability_match': 0.05, # Reduced
     'values_match': 0.10,
-    'barriers_support_match': 0.15
+    'barriers_support_match': 0.05,
+    'industry_match': 0.10,  # NEW WEIGHT - adjust as desired
+    'department_match': 0.10 # NEW WEIGHT - adjust as desired
 }
 
+# Normalize weights to sum to 1.0
 total_weight_sum = sum(WEIGHTS.values())
 if total_weight_sum > 0:
     WEIGHTS = {k: v / total_weight_sum for k, v in WEIGHTS.items()}
 logging.info(f"Normalized Weights (sum={sum(WEIGHTS.values()):.2f}): {WEIGHTS}")
 
 
-# --- All your matching algorithm functions (unchanged) ---
+# --- All your matching algorithm functions (unchanged from your original) ---
 def get_embedding(text):
     """Generates an embedding for the given text using Gemini's text-embedding-004 model."""
     if not text:
@@ -137,6 +142,7 @@ def calculate_personality_similarity(mentee_score: int, mentor_score: int,
 
 
 def calculate_exact_match(mentee_val: str, mentor_val: str) -> float:
+    # Ensure values are treated as strings before lowercasing
     return 1.0 if str(mentee_val).lower() == str(mentor_val).lower() else 0.0
 
 
@@ -146,10 +152,12 @@ def calculate_list_overlap(list1: list, list2: list) -> float:
     s1 = set(item.lower() for item in list1)
     s2 = set(item.lower() for item in list2)
     common_elements = len(s1.intersection(s2))
+    # It seems your original intention was common elements / len(s1).
+    # If you want common elements / min(len(s1), len(s2)) or / len(s2), adjust here.
     return common_elements / len(s1) if len(s1) > 0 else 0.0
 
 
-# --- Main Matching Function ---
+# --- Main Matching Function (UPDATED) ---
 def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> list:
     matches = []
 
@@ -157,72 +165,93 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
         score_components = {}
         total_weighted_score = 0.0
 
+        # Goal Similarity (using embeddings)
         goal_sim = calculate_goal_similarity(mentee_profile.get('goal_target', ''),
                                              mentor.get('goal_support', ''))
         score_components['goal_similarity'] = goal_sim
         total_weighted_score += goal_sim * WEIGHTS['goal_similarity']
 
+        # Skills Development vs. Coaching Skills (Jaccard)
         skills_match = calculate_jaccard_similarity(mentee_profile.get('skills_to_develop', []),
                                                     mentor.get('coaching_skills', []))
         score_components['skills_match'] = skills_match
         total_weighted_score += skills_match * WEIGHTS['skills_match']
 
+        # Current Challenges vs. Mentor Help Areas (Jaccard)
         challenges_match = calculate_jaccard_similarity(
             mentee_profile.get('current_challenges', []), mentor.get('challenges_help', []))
         score_components['challenges_match'] = challenges_match
         total_weighted_score += challenges_match * WEIGHTS['challenges_match']
 
+        # Values Alignment (Jaccard)
         values_match = calculate_jaccard_similarity(mentee_profile.get('values', []),
                                                     mentor.get('values', []))
         score_components['values_match'] = values_match
         total_weighted_score += values_match * WEIGHTS['values_match']
 
+        # Barriers Faced vs. Support Areas (Jaccard)
         barriers_support_match = calculate_jaccard_similarity(
             mentee_profile.get('barriers_faced', []), mentor.get('support_areas', []))
         score_components['barriers_support_match'] = barriers_support_match
         total_weighted_score += barriers_support_match * WEIGHTS['barriers_support_match']
 
+        # Canadian Landscape Match (Jaccard)
         canadian_landscape_match = calculate_jaccard_similarity(
             mentee_profile.get('unclear_canadian_landscape', []),
             mentor.get('canadian_landscape_help', []))
         score_components['canadian_landscape_match'] = canadian_landscape_match
         total_weighted_score += canadian_landscape_match * WEIGHTS['canadian_landscape_match']
 
-        personality_fields = ['extraversion', 'conscientiousness', 'emotional_stability',
-                              'openness']
+        # Personality Match (Big Five)
+        personality_fields = ['extraversion', 'conscientiousness', 'emotional_stability', 'openness']
         personality_score_sum = 0
         for field in personality_fields:
-            mentee_score = mentee_profile.get(field, 3)
-            mentor_score = mentor.get(field, 3)
+            mentee_score = mentee_profile.get(field, 3) # Default to 3 if missing
+            mentor_score = mentor.get(field, 3) # Default to 3 if missing
             sim = calculate_personality_similarity(mentee_score, mentor_score)
             score_components[f'personality_{field}'] = sim
             personality_score_sum += sim * WEIGHTS[f'personality_{field}']
         total_weighted_score += personality_score_sum
 
+        # Country/Origin Match (Exact)
         country_match = calculate_exact_match(mentee_profile.get('origin', ''),
                                               mentor.get('country', ''))
         score_components['country_match'] = country_match
         total_weighted_score += country_match * WEIGHTS['country_match']
 
+        # Preferred Channel Match (Exact)
         channel_match = calculate_exact_match(mentee_profile.get('preferred_channel', ''),
                                               mentor.get('preferred_channel', ''))
         score_components['preferred_channel_match'] = channel_match
         total_weighted_score += channel_match * WEIGHTS['preferred_channel_match']
 
+        # English Level Match (Exact)
         english_match = calculate_exact_match(mentee_profile.get('english_cefr', ''),
                                               mentor.get('english_level', ''))
         score_components['english_level_match'] = english_match
         total_weighted_score += english_match * WEIGHTS['english_level_match']
 
+        # Availability Match (List Overlap)
         availability_match = calculate_list_overlap(mentee_profile.get('availability', []),
                                                     mentor.get('availability', []))
         score_components['availability_match'] = availability_match
         total_weighted_score += availability_match * WEIGHTS['availability_match']
 
+        # Feedback Style Match (Exact)
         feedback_match = calculate_exact_match(mentee_profile.get('feedback_style', ''),
                                                mentor.get('feedback_style', ''))
         score_components['feedback_style_match'] = feedback_match
         total_weighted_score += feedback_match * WEIGHTS['feedback_style_match']
+
+        industry_match = calculate_exact_match(mentee_profile.get('industry', ''),
+                                               mentor.get('industry', ''))
+        score_components['industry_match'] = industry_match
+        total_weighted_score += industry_match * WEIGHTS['industry_match']
+
+        department_match = calculate_exact_match(mentee_profile.get('department', ''),
+                                                 mentor.get('department', ''))
+        score_components['department_match'] = department_match
+        total_weighted_score += department_match * WEIGHTS['department_match']
 
         matches.append({
             'mentor_id': mentor['id'],
@@ -255,7 +284,8 @@ def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.Data
             logging.info(f"Successfully deleted existing matches for mentee ID: {mentee_id}.")
         else:
             logging.warning(
-                f"Deletion for mentee ID {mentee_id} completed, but response was unexpected. Response data: {delete_response.data}")
+                f"Deletion for mentee ID {mentee_id} completed, but response was unexpected."
+                f"Response data: {delete_response.data}")
 
         # Get the full mentee profile once for explanation generation
         current_mentee_profile = mentees_df[mentees_df['id'] == mentee_id].iloc[0].to_dict()
@@ -297,6 +327,8 @@ def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.Data
 
     except Exception as e:
         logging.error(f"Error storing matches for mentee ID {mentee_id}: {e}")
+
+    logging.info("Matching process completed.")
 
 
 if __name__ == "__main__":
