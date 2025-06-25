@@ -1,11 +1,28 @@
 "use client";
 
-import { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const EnhancedOnboardingPage = () => {
+  const router = useRouter();
+  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
 
+  useEffect(()=>{
+    const getSession = async () => {
+      const {data: {session}} = await supabase.auth.getSession();
+      if(!session?.user) router.push("/sign-up");
+      else {
+        setUser(session.user);
+        setLoading(false);
+      }
+    };
+
+    getSession();
+  }, [router])
   // Sample themes and questions for each step
   const stepData = [
     {
@@ -77,6 +94,8 @@ const EnhancedOnboardingPage = () => {
   };
 
   const currentStepData = stepData.find(step => step.step === currentStep);
+
+  if(loading) return <div className="text-7xl bg-white h-screen w-screen text-black text-center pt-60">Loading...</div>
 
   return (
     <div className="min-h-screen bg-gray-200 flex">

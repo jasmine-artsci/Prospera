@@ -73,6 +73,7 @@ const Header = ({
             <span className="cursor-default text-lg text-black">Prospéra</span>
           </div>
           <nav className="flex flex-col md:flex-row md:justify-center gap-3 md:gap-8 text-black/80 items-center">
+          <div className="flex flex-row gap-10">
             <div className="flex gap-3 md:gap-6">
               <button
                 onClick={() => scrollToSection(aboutRef)}
@@ -118,7 +119,8 @@ const Header = ({
                     <span className={`absolute inset-0 bg-emerald-700 scale-0 origin-center rounded-full transition-transform duration-400 transform ${isAnimating ? 'scale-110 ' : "scale-0"}`}></span>
                     <span className="relative z-10">Logout</span>
                 </button>
-                )  :
+                )  
+                :
                 (
                 <button 
                   onMouseOver={()=>setIsAnimating(true)} 
@@ -126,11 +128,12 @@ const Header = ({
                   onClick={()=>router.push("sign-up")}
                   className={`${isAnimating ? "shadow-2xl" : "shadow-none"} hover:border-transparent relative items-center overflow-hidden px-3.5 py-1.5 bg-black/80 text-white rounded-xl font-semibold cursor-pointer`}>
                     <span className={`absolute inset-0 bg-emerald-700 scale-0 origin-center rounded-full transition-transform duration-400 transform ${isAnimating ? 'scale-110 ' : "scale-0"}`}></span>
-                    <span className="relative z-10">Sign up / Login</span>
+                    <span className="relative z-10">Register / Login</span>
                 </button>
                 )
               )
               }
+            </div>
             </div>
           </nav>
         </div>

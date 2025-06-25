@@ -38,12 +38,9 @@ export default function SignupPage() {
     await supabase.from('users').insert({
       auth_id: userId,
       name: name,
-      role: null,
-      skills: [],
-      created_at: new Date(),
     });
 
-    router.push(`/`);
+    router.push(`/onboarding?auth_id=${userId}`);
   };
 
   return (
@@ -51,11 +48,11 @@ export default function SignupPage() {
       <form onSubmit={handleSubmit} className="max-w-md mx-auto p-4">
         <h2 className="text-xl font-semibold mb-4">Sign Up</h2>
         <input 
-          onChange={e => setForm({ ...form, email: e.target.value })} 
+          onChange={e => {setError(""); setForm({ ...form, email: e.target.value })}} 
           placeholder="Email" className="w-full border p-2 mb-2" 
           required/>
         <input
-          onChange={e=> setForm({ ...form, password: e.target.value })}
+          onChange={e=> {setError(""), setForm({ ...form, password: e.target.value })}}
           type="password"
           placeholder="Password"
           className="w-full border p-2 mb-2"
@@ -71,13 +68,13 @@ export default function SignupPage() {
         {error && <p className="text-red-500 mb-2">{error}</p>}
         <div className='flex flex-col gap-2 mt-2'>
           <button onClick={()=>router.push("/")} className="bg-gray-600 text-white p-2 w-full hover:bg-gray-700 rounded transition">Go Back</button>
-          <button type="submit" className="bg-green-600 hover:bg-green-700 transition text-white rounded p-2 w-full">Continue</button>
+          <button type="submit" className="bg-emerald-600 hover:bg-emerald-700 transition text-white rounded p-2 w-full">Continue</button>
         </div>
       </form>
       <div className="text-center text-white mt-5">
           Already have an account?
           <br />
-          <a onClick={()=>router.push('/login')} className="text-blue-500 hover:underline">
+          <a onClick={()=>router.push('/login')} className="text-blue-500 hover:underline cursor-pointer">
             Login
           </a>
       </div>
