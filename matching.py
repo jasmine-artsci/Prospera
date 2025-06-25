@@ -2,14 +2,16 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import os
-import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 from supabase import create_client, Client
+import logging
+import why_match  # Import the new module!
 
+# Load environment variables
 load_dotenv()
 
-# Configure Gemini API for Embeddings
+# Configure Gemini API for Embeddings (GENERATION_MODEL config is now in why_match.py)
 api_key = os.getenv("GEMINI_API_KEY")
 if not api_key:
     raise ValueError("GEMINI_API_KEY not found. Please set it in your .env file.")
@@ -17,7 +19,7 @@ genai.configure(api_key=api_key)
 
 EMBEDDING_MODEL = "models/text-embedding-004"
 
-# Supabase Database Configuration
+# --- Supabase Database Configuration ---
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -32,10 +34,10 @@ def get_supabase() -> Client:
     """
     try:
         supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
-        print("Supabase client initialized successfully.")
+        logging.info("Supabase client initialized successfully.")
         return supabase
     except Exception as e:
-        print(f"Error initializing Supabase client: {e}")
+        logging.error(f"Error initializing Supabase client: {e}")
         raise e
 
 
@@ -46,16 +48,14 @@ supabase_client = get_supabase()
 def fetch_all_mentors_from_supabase() -> pd.DataFrame:
     """Fetches all mentor profiles from the 'mentors' table in Supabase."""
     try:
-        # Use the Supabase client to query the 'mentors' table
         response = supabase_client.from_('mentors').select('*').execute()
-        # The 'data' attribute contains the list of dictionaries
         mentors_list = response.data
         if not mentors_list:
-            print("No mentors found in Supabase 'mentors' table.")
+            logging.info("No mentors found in Supabase 'mentors' table.")
             return pd.DataFrame()
         return pd.DataFrame(mentors_list)
     except Exception as e:
-        print(f"Error fetching mentors from Supabase: {e}")
+        logging.error(f"Error fetching mentors from Supabase: {e}")
         return pd.DataFrame()
 
 
@@ -65,18 +65,19 @@ def fetch_all_mentees_from_supabase() -> pd.DataFrame:
         response = supabase_client.from_('mentees').select('*').execute()
         mentees_list = response.data
         if not mentees_list:
-            print("No mentees found in Supabase 'mentees' table.")
+            logging.info("No mentees found in Supabase 'mentees' table.")
             return pd.DataFrame()
         return pd.DataFrame(mentees_list)
     except Exception as e:
-        print(f"Error fetching mentees from Supabase: {e}")
+        logging.error(f"Error fetching mentees from Supabase: {e}")
         return pd.DataFrame()
 
 
+# Define Weights (same as before)
 WEIGHTS = {
-    'goal_similarity': 0.55,
+    'goal_similarity': 0.45,
     'skills_match': 0.40,
-    'challenges_match': 0.45,
+    'challenges_match': 0.35,
     'country_match': 0.20,
     'canadian_landscape_match': 0.10,
     'english_level_match': 0.05,
@@ -94,9 +95,10 @@ WEIGHTS = {
 total_weight_sum = sum(WEIGHTS.values())
 if total_weight_sum > 0:
     WEIGHTS = {k: v / total_weight_sum for k, v in WEIGHTS.items()}
-print(f"Normalized Weights (sum={sum(WEIGHTS.values()):.2f}): {WEIGHTS}")
+logging.info(f"Normalized Weights (sum={sum(WEIGHTS.values()):.2f}): {WEIGHTS}")
 
 
+# --- All your matching algorithm functions (unchanged) ---
 def get_embedding(text):
     """Generates an embedding for the given text using Gemini's text-embedding-004 model."""
     if not text:
@@ -105,10 +107,10 @@ def get_embedding(text):
         embedding_response = genai.embed_content(model=EMBEDDING_MODEL, content=text)
         return np.array(embedding_response['embedding'])
     except Exception as e:
-        print(f"Error getting embedding for text: '{text[:50]}...'. Error: {e}")
+        logging.warning(f"Error getting embedding for text: '{text[:50]}...'. Error: {e}")
         return np.zeros(768)
 
-# 5 different matching algorithms
+
 def calculate_goal_similarity(mentee_goal: str, mentor_goal: str) -> float:
     mentee_embedding = get_embedding(mentee_goal)
     mentor_embedding = get_embedding(mentor_goal)
@@ -147,16 +149,8 @@ def calculate_list_overlap(list1: list, list2: list) -> float:
     return common_elements / len(s1) if len(s1) > 0 else 0.0
 
 
-# --- Main Matching Function (takes DataFrame from Supabase) ---
+# --- Main Matching Function ---
 def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> list:
-    """
-    Record match score to the database and return top 3 matched mentors.
-    :param mentee_profile:
-    :param mentors_df:
-    :return:
-    """
-    # (This function remains exactly the same as in the previous version,
-    # it just receives data fetched by the new Supabase functions)
     matches = []
 
     for _, mentor in mentors_df.iterrows():
@@ -238,69 +232,71 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
         })
 
     matches.sort(key=lambda x: x['total_score'], reverse=True)
-    return matches[:3]
+    return matches  # Returns all sorted matches. We'll limit and generate explanations in main.
 
 
-def store_matches_in_supabase(mentee_id: str, matches: list):
+def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.DataFrame,
+                              mentors_df: pd.DataFrame):
     """
     Stores the matching results for a single mentee into the mentee_mentor_matches table.
     Deletes existing matches for the mentee before inserting new ones to prevent duplicates/stale data.
+    Now also generates the explanation text using why_match.
     """
     if not matches:
-        print(f"No matches to store for mentee ID: {mentee_id}")
+        logging.info(f"No matches to store for mentee ID: {mentee_id}")
         return
 
     try:
-        # 1. Delete existing matches for this mentee
-        print(f"Deleting existing matches for mentee ID: {mentee_id}...")
-        # For delete operations, the .execute() method either returns data (if rows were returned, though usually not for delete)
-        # or raises an exception on error. A successful delete typically means no exception is raised
-        # and 'data' will be empty or a list with no items.
+        logging.info(f"Deleting existing matches for mentee ID: {mentee_id}...")
         delete_response = supabase_client.from_('mentee_mentor_matches').delete().eq('mentee_id',
                                                                                      mentee_id).execute()
 
-        # Check if the deletion was successful by looking at the 'data' attribute or just assuming success if no error was raised
-        # If 'data' is an empty list, it usually indicates success for delete operations where no rows are returned.
-        # If it contains data, it means rows matching the delete condition were returned (e.g., if .returning('*') was used, which is not here).
         if delete_response.data is not None:
-            print(f"Successfully deleted existing matches for mentee ID: {mentee_id}.")
+            logging.info(f"Successfully deleted existing matches for mentee ID: {mentee_id}.")
         else:
-            # This branch might indicate an unexpected response or partial success if 'data' is None
-            # but no exception was raised. For simple deletes, an empty list or None for 'data' implies success.
-            print(
-                f"Warning: Deletion for mentee ID {mentee_id} completed, but response was unexpected. Response data: {delete_response.data}")
+            logging.warning(
+                f"Deletion for mentee ID {mentee_id} completed, but response was unexpected. Response data: {delete_response.data}")
 
-        # 2. Prepare data for insertion
+        # Get the full mentee profile once for explanation generation
+        current_mentee_profile = mentees_df[mentees_df['id'] == mentee_id].iloc[0].to_dict()
+
+        # Prepare data for insertion
         records_to_insert = []
         for rank, match in enumerate(matches):
+            # Get the full mentor profile for explanation generation
+            mentor_profile = mentors_df[mentors_df['id'] == match['mentor_id']].iloc[0].to_dict()
+
+            # Generate the explanation text using the imported module
+            explanation_text = why_match.generate_match_explanation(
+                mentee_profile=current_mentee_profile,  # Pass the full mentee profile
+                mentor_profile=mentor_profile,  # Pass the full mentor profile
+                score_components=match['score_components']
+            )
+
             records_to_insert.append({
                 'mentee_id': mentee_id,
                 'mentor_id': match['mentor_id'],
                 'match_score': match['total_score'],
-                'match_rank': rank + 1,  # Rank starts from 1
+                'match_rank': rank + 1,
                 'generated_at': pd.Timestamp.now(tz='UTC').isoformat(),
-                # Store as ISO format string
-                'score_components': match['score_components']  # Store the detailed components
+                'score_components': match['score_components'],
+                'explanation_text': explanation_text  # Add explanation text
             })
 
-        # 3. Insert new matches
-        print(f"Inserting {len(records_to_insert)} new matches for mentee ID: {mentee_id}...")
+        logging.info(
+            f"Inserting {len(records_to_insert)} new matches for mentee ID: {mentee_id}...")
         insert_response = supabase_client.from_('mentee_mentor_matches').insert(
             records_to_insert).execute()
 
-        # For insert operations, insert_response.data will contain the inserted rows on success
         if insert_response.data:
-            print(
+            logging.info(
                 f"Successfully stored {len(insert_response.data)} matches for mentee ID: {mentee_id}.")
         else:
-            # This part would typically only be reached if .execute() didn't raise an error
-            # but returned empty data, which is unlikely for a successful insert of records.
-            print(
+            logging.error(
                 f"Error storing matches for mentee ID: {mentee_id}. Insert response data was empty.")
 
     except Exception as e:
-        # Catches any exceptions raised by the Supabase client, including actual API errors
-        print(f"Error storing matches for mentee ID {mentee_id}: {e}")
+        logging.error(f"Error storing matches for mentee ID {mentee_id}: {e}")
 
 
 if __name__ == "__main__":
@@ -324,14 +320,32 @@ if __name__ == "__main__":
     logging.info(f"Mentors fetched from Supabase: {len(mentors_df_supabase)}")
     logging.info(f"Mentees fetched from Supabase: {len(mentees_df_supabase)}")
 
-    for _, mentee_profile in mentees_df_supabase.iterrows():
-        mentee_profile = mentee_profile.to_dict()
-        mentee_id = str(mentee_profile['id'])  # Get the mentee's actual UUID
+    # Limit to top 3 matches before storing and generating explanations
+    MATCH_LIMIT_PER_MENTEE = 3
+
+    for _, mentee_profile_df_row in mentees_df_supabase.iterrows():
+        mentee_profile = mentee_profile_df_row.to_dict()
+        mentee_id = str(mentee_profile['id'])
+
+        logging.info(
+            f"--- Processing Mentee: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
 
         try:
-            supabase_matches = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
-            store_matches_in_supabase(mentee_id, supabase_matches)
-            logging.info(f"Successfully stored matches for mentee ID: {mentee_id}")
+            all_matches_for_mentee = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
+
+            # Apply the limit here
+            top_matches_for_mentee = all_matches_for_mentee[:MATCH_LIMIT_PER_MENTEE]
+
+            if not top_matches_for_mentee:
+                logging.info(f"No top matches found for mentee ID: {mentee_id}.")
+                continue
+
+            # Pass both dataframes to store_matches_in_supabase for explanation generation
+            store_matches_in_supabase(mentee_id, top_matches_for_mentee, mentees_df_supabase,
+                                      mentors_df_supabase)
+            logging.info(
+                f"Successfully processed and stored top {len(top_matches_for_mentee)} matches for mentee ID: {mentee_id}")
+
         except Exception as e:
             logging.error(f"Error processing mentee ID {mentee_id}: {e}")
 
