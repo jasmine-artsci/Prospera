@@ -5,10 +5,11 @@ import About from "@/components/landing/About"
 import Feature from "@/components/landing/Feature"
 import Footer from "@/components/landing/Footer"
 
-const page = () => {
+const Home = () => {
   return (
     <div className="bg-white">
-      <Header />
+      <Header 
+      />
       <div>
         <Hero />
       </div>
@@ -23,4 +24,4 @@ const page = () => {
   )
 }
 
-export default page
+export default Home
