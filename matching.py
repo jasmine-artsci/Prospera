@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 import os
+import logging
 import google.generativeai as genai
 from dotenv import load_dotenv
 from supabase import create_client, Client
 
-# Load environment variables
 load_dotenv()
 
 # Configure Gemini API for Embeddings
@@ -17,7 +17,7 @@ genai.configure(api_key=api_key)
 
 EMBEDDING_MODEL = "models/text-embedding-004"
 
-# --- Supabase Database Configuration ---
+# Supabase Database Configuration
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_KEY = os.getenv("SUPABASE_KEY")
 
@@ -73,7 +73,6 @@ def fetch_all_mentees_from_supabase() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-# Define Weights (same as before)
 WEIGHTS = {
     'goal_similarity': 0.55,
     'skills_match': 0.40,
@@ -97,8 +96,7 @@ if total_weight_sum > 0:
     WEIGHTS = {k: v / total_weight_sum for k, v in WEIGHTS.items()}
 print(f"Normalized Weights (sum={sum(WEIGHTS.values()):.2f}): {WEIGHTS}")
 
-# --- All your matching algorithm functions (unchanged) ---
-# (These functions remain exactly the same as in the previous version)
+
 def get_embedding(text):
     """Generates an embedding for the given text using Gemini's text-embedding-004 model."""
     if not text:
@@ -110,12 +108,14 @@ def get_embedding(text):
         print(f"Error getting embedding for text: '{text[:50]}...'. Error: {e}")
         return np.zeros(768)
 
+# 5 different matching algorithms
 def calculate_goal_similarity(mentee_goal: str, mentor_goal: str) -> float:
     mentee_embedding = get_embedding(mentee_goal)
     mentor_embedding = get_embedding(mentor_goal)
     if np.all(mentee_embedding == 0) or np.all(mentor_embedding == 0):
         return 0.0
     return cosine_similarity(mentee_embedding.reshape(1, -1), mentor_embedding.reshape(1, -1))[0][0]
+
 
 def calculate_jaccard_similarity(set1: list, set2: list) -> float:
     if not set1 or not set2:
@@ -126,13 +126,17 @@ def calculate_jaccard_similarity(set1: list, set2: list) -> float:
     union = len(s1.union(s2))
     return intersection / union if union != 0 else 0.0
 
-def calculate_personality_similarity(mentee_score: int, mentor_score: int, max_score: int = 5) -> float:
+
+def calculate_personality_similarity(mentee_score: int, mentor_score: int,
+                                     max_score: int = 5) -> float:
     diff = abs(mentee_score - mentor_score)
     max_diff = max_score - 1
     return 1 - (diff / max_diff) if max_diff != 0 else 1.0
 
+
 def calculate_exact_match(mentee_val: str, mentor_val: str) -> float:
     return 1.0 if str(mentee_val).lower() == str(mentor_val).lower() else 0.0
+
 
 def calculate_list_overlap(list1: list, list2: list) -> float:
     if not list1 or not list2:
@@ -142,8 +146,15 @@ def calculate_list_overlap(list1: list, list2: list) -> float:
     common_elements = len(s1.intersection(s2))
     return common_elements / len(s1) if len(s1) > 0 else 0.0
 
+
 # --- Main Matching Function (takes DataFrame from Supabase) ---
 def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> list:
+    """
+    Record match score to the database and return top 3 matched mentors.
+    :param mentee_profile:
+    :param mentors_df:
+    :return:
+    """
     # (This function remains exactly the same as in the previous version,
     # it just receives data fetched by the new Supabase functions)
     matches = []
@@ -152,31 +163,39 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
         score_components = {}
         total_weighted_score = 0.0
 
-        goal_sim = calculate_goal_similarity(mentee_profile.get('goal_target', ''), mentor.get('goal_support', ''))
+        goal_sim = calculate_goal_similarity(mentee_profile.get('goal_target', ''),
+                                             mentor.get('goal_support', ''))
         score_components['goal_similarity'] = goal_sim
         total_weighted_score += goal_sim * WEIGHTS['goal_similarity']
 
-        skills_match = calculate_jaccard_similarity(mentee_profile.get('skills_to_develop', []), mentor.get('coaching_skills', []))
+        skills_match = calculate_jaccard_similarity(mentee_profile.get('skills_to_develop', []),
+                                                    mentor.get('coaching_skills', []))
         score_components['skills_match'] = skills_match
         total_weighted_score += skills_match * WEIGHTS['skills_match']
 
-        challenges_match = calculate_jaccard_similarity(mentee_profile.get('current_challenges', []), mentor.get('challenges_help', []))
+        challenges_match = calculate_jaccard_similarity(
+            mentee_profile.get('current_challenges', []), mentor.get('challenges_help', []))
         score_components['challenges_match'] = challenges_match
         total_weighted_score += challenges_match * WEIGHTS['challenges_match']
 
-        values_match = calculate_jaccard_similarity(mentee_profile.get('values', []), mentor.get('values', []))
+        values_match = calculate_jaccard_similarity(mentee_profile.get('values', []),
+                                                    mentor.get('values', []))
         score_components['values_match'] = values_match
         total_weighted_score += values_match * WEIGHTS['values_match']
 
-        barriers_support_match = calculate_jaccard_similarity(mentee_profile.get('barriers_faced', []), mentor.get('support_areas', []))
+        barriers_support_match = calculate_jaccard_similarity(
+            mentee_profile.get('barriers_faced', []), mentor.get('support_areas', []))
         score_components['barriers_support_match'] = barriers_support_match
         total_weighted_score += barriers_support_match * WEIGHTS['barriers_support_match']
 
-        canadian_landscape_match = calculate_jaccard_similarity(mentee_profile.get('unclear_canadian_landscape', []), mentor.get('canadian_landscape_help', []))
+        canadian_landscape_match = calculate_jaccard_similarity(
+            mentee_profile.get('unclear_canadian_landscape', []),
+            mentor.get('canadian_landscape_help', []))
         score_components['canadian_landscape_match'] = canadian_landscape_match
         total_weighted_score += canadian_landscape_match * WEIGHTS['canadian_landscape_match']
 
-        personality_fields = ['extraversion', 'conscientiousness', 'emotional_stability', 'openness']
+        personality_fields = ['extraversion', 'conscientiousness', 'emotional_stability',
+                              'openness']
         personality_score_sum = 0
         for field in personality_fields:
             mentee_score = mentee_profile.get(field, 3)
@@ -186,23 +205,28 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
             personality_score_sum += sim * WEIGHTS[f'personality_{field}']
         total_weighted_score += personality_score_sum
 
-        country_match = calculate_exact_match(mentee_profile.get('origin', ''), mentor.get('country', ''))
+        country_match = calculate_exact_match(mentee_profile.get('origin', ''),
+                                              mentor.get('country', ''))
         score_components['country_match'] = country_match
         total_weighted_score += country_match * WEIGHTS['country_match']
 
-        channel_match = calculate_exact_match(mentee_profile.get('preferred_channel', ''), mentor.get('preferred_channel', ''))
+        channel_match = calculate_exact_match(mentee_profile.get('preferred_channel', ''),
+                                              mentor.get('preferred_channel', ''))
         score_components['preferred_channel_match'] = channel_match
         total_weighted_score += channel_match * WEIGHTS['preferred_channel_match']
 
-        english_match = calculate_exact_match(mentee_profile.get('english_cefr', ''), mentor.get('english_level', ''))
+        english_match = calculate_exact_match(mentee_profile.get('english_cefr', ''),
+                                              mentor.get('english_level', ''))
         score_components['english_level_match'] = english_match
         total_weighted_score += english_match * WEIGHTS['english_level_match']
 
-        availability_match = calculate_list_overlap(mentee_profile.get('availability', []), mentor.get('availability', []))
+        availability_match = calculate_list_overlap(mentee_profile.get('availability', []),
+                                                    mentor.get('availability', []))
         score_components['availability_match'] = availability_match
         total_weighted_score += availability_match * WEIGHTS['availability_match']
 
-        feedback_match = calculate_exact_match(mentee_profile.get('feedback_style', ''), mentor.get('feedback_style', ''))
+        feedback_match = calculate_exact_match(mentee_profile.get('feedback_style', ''),
+                                               mentor.get('feedback_style', ''))
         score_components['feedback_style_match'] = feedback_match
         total_weighted_score += feedback_match * WEIGHTS['feedback_style_match']
 
@@ -275,47 +299,79 @@ def store_matches_in_supabase(mentee_id: str, matches: list):
                 f"Error storing matches for mentee ID: {mentee_id}. Insert response data was empty.")
 
     except Exception as e:
-        # This catches any exceptions raised by the Supabase client, including actual API errors
+        # Catches any exceptions raised by the Supabase client, including actual API errors
         print(f"Error storing matches for mentee ID {mentee_id}: {e}")
 
 
 if __name__ == "__main__":
-    print("\n--- Fetching data from Supabase ---")
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+    logging.info("Fetching data from Supabase...")
 
     mentors_df_supabase = fetch_all_mentors_from_supabase()
     mentees_df_supabase = fetch_all_mentees_from_supabase()
 
     if mentors_df_supabase.empty:
-        print("No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
+        logging.error(
+            "No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
         exit()
     if mentees_df_supabase.empty:
-        print("No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
+        logging.error(
+            "No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
         exit()
 
-    print(f"\nMentors fetched from Supabase ({len(mentors_df_supabase)}):")
-    print(mentors_df_supabase[['name', 'goal_support']].head())
-    print(f"\nMentees fetched from Supabase ({len(mentees_df_supabase)}):")
-    print(mentees_df_supabase[['name', 'goal_target']].head())
+    logging.info(f"Mentors fetched from Supabase: {len(mentors_df_supabase)}")
+    logging.info(f"Mentees fetched from Supabase: {len(mentees_df_supabase)}")
 
+    for _, mentee_profile in mentees_df_supabase.iterrows():
+        mentee_profile = mentee_profile.to_dict()
+        mentee_id = str(mentee_profile['id'])  # Get the mentee's actual UUID
 
-    mentee_names_to_test = ['Alex Wong', 'Priya Nair', 'Luis Herrera', 'Fatima Khan', 'Carlos Silva']
-
-    for mentee_name in mentee_names_to_test:
-        mentee_profiles = mentees_df_supabase[mentees_df_supabase['name'] == mentee_name]
-
-        if not mentee_profiles.empty:
-            mentee_profile = mentee_profiles.iloc[0].to_dict()
-            mentee_id = str(mentee_profile['id']) # Get the mentee's actual UUID
-
-            print(f"\n--- Matching Mentee from Supabase: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
+        try:
             supabase_matches = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
-
-            for match in supabase_matches:
-                print(f"Mentor: {match['mentor_name']}, Score: {match['total_score']:.2f}")
-                # print(f"  Components: {match['score_components']}") # Uncomment for detailed scores
-
-            # --- THIS IS THE KEY CALL ---
             store_matches_in_supabase(mentee_id, supabase_matches)
+            logging.info(f"Successfully stored matches for mentee ID: {mentee_id}")
+        except Exception as e:
+            logging.error(f"Error processing mentee ID {mentee_id}: {e}")
 
-        else:
-            print(f"Mentee with name '{mentee_name}' not found in Supabase data.")
+# if __name__ == "__main__":
+#     print("\n--- Fetching data from Supabase ---")
+#
+#     mentors_df_supabase = fetch_all_mentors_from_supabase()
+#     mentees_df_supabase = fetch_all_mentees_from_supabase()
+#
+#     if mentors_df_supabase.empty:
+#         print("No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
+#         exit()
+#     if mentees_df_supabase.empty:
+#         print("No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
+#         exit()
+#
+#     print(f"\nMentors fetched from Supabase ({len(mentors_df_supabase)}):")
+#     print(mentors_df_supabase[['name', 'goal_support']].head())
+#     print(f"\nMentees fetched from Supabase ({len(mentees_df_supabase)}):")
+#     print(mentees_df_supabase[['name', 'goal_target']].head())
+#
+#
+#     mentee_names_to_test = ['Alex Wong', 'Priya Nair', 'Luis Herrera', 'Fatima Khan', 'Carlos Silva']
+#
+#     for mentee_name in mentee_names_to_test:
+#         mentee_profiles = mentees_df_supabase[mentees_df_supabase['name'] == mentee_name]
+#
+#         if not mentee_profiles.empty:
+#             mentee_profile = mentee_profiles.iloc[0].to_dict()
+#             mentee_id = str(mentee_profile['id']) # Get the mentee's actual UUID
+#
+#             print(f"\n--- Matching Mentee from Supabase: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
+#             supabase_matches = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
+#
+#             for match in supabase_matches:
+#                 print(f"Mentor: {match['mentor_name']}, Score: {match['total_score']:.2f}")
+#                 # print(f"  Components: {match['score_components']}") # Uncomment for detailed scores
+#
+#             # --- THIS IS THE KEY CALL ---
+#             store_matches_in_supabase(mentee_id, supabase_matches)
+#
+#         else:
+#             print(f"Mentee with name '{mentee_name}' not found in Supabase data.")
