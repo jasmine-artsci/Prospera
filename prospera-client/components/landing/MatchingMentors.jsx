@@ -1,7 +1,10 @@
 "use client";
 
-import React from "react";
-import Card from "./Cards"; // Adjust path if needed
+import React, { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import Card from "./Cards";
+
+const MENTEE_ID = "ea5e29c8-e1fd-4680-9f60-39897453cdf0";
 
 const mentorsData = [
   {
@@ -34,6 +37,33 @@ const mentorsData = [
 ];
 
 const MatchingMentors = () => {
+  const [mentors, setMentors] = useState([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const fetchMentors = async () => {
+      setLoading(true);
+      const { data, error } = await supabase
+        .from("mentee_mentor_matches")
+        .select("*")
+        .eq("mentee_id", MENTEE_ID)
+        .order("match_score", { ascending: false })
+        .limit(3);
+
+      if (error) {
+        alert('No');
+        console.error("Error fetching mentors:", error.message);
+      } else {
+        alert('yes');
+        console.log("Fetched mentors:", data);
+        setMentors(data);
+      }
+
+      setLoading(false);
+    };
+
+    fetchMentors();
+  }, []);
+
   return (
     <section className="min-h-screen bg-gray-100 py-10 px-4 md:px-12 lg:px-24">
       <h2 className="text-2xl font-bold text-center mb-8 text-gray-800">
