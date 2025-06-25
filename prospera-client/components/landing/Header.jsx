@@ -41,15 +41,13 @@ const Header = ({
             onClick={() => scrollToSection(heroRef)}
             className="flex flex-col md:flex-row items-center gap-2 font-extrabold text-1xl"
           >
-            {/* <Image
-              src="/"
-              alt=""
-              width={40} // Adjusted width
-              height={40} // Adjusted height
-              objectFit="cover"
-              className="rounded-full  shadow-lg"
-            /> */}
-            <span className="cursor-default text-lg text-black">Prospéra</span>
+            <Image
+              src="/images/prospera-logo.png"
+              alt="Prospéra Logo"
+              width={120}
+              height={40}
+              className="cursor-pointer"
+            />
           </div>
           <nav className="flex flex-col md:flex-row md:justify-center gap-3 md:gap-8 text-black/80 items-center">
             <div className="flex gap-3 md:gap-6">
