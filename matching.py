@@ -6,7 +6,7 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import logging
-import why_match  # Import the new module!
+import why_match
 
 # Load environment variables
 load_dotenv()
@@ -75,25 +75,24 @@ def fetch_all_mentees_from_supabase() -> pd.DataFrame:
         return pd.DataFrame()
 
 
-# Define Weights (UPDATED: Added industry_match and department_match)
 WEIGHTS = {
-    'goal_similarity': 0.20, # Reduced to make room for new weights
-    'skills_match': 0.15,    # Reduced
-    'challenges_match': 0.15,  # Reduced
-    'country_match': 0.05,
-    'canadian_landscape_match': 0.05,
-    'english_level_match': 0.05,
+    'goal_similarity': 0.80,
+    'skills_match': 0.85,
+    'challenges_match': 0.85,
+    'country_match': 0.55,
+    'canadian_landscape_match': 0.35,
+    'english_level_match': 0.35,
     'preferred_channel_match': 0.05,
-    'personality_extraversion': 0.02, # Remain low, as they are individual components of overall personality
-    'personality_conscientiousness': 0.02,
-    'personality_emotional_stability': 0.02,
-    'personality_openness': 0.02,
-    'feedback_style_match': 0.05,
-    'availability_match': 0.05, # Reduced
-    'values_match': 0.10,
+    'personality_extraversion': 0.50,
+    'personality_conscientiousness': 0.50,
+    'personality_emotional_stability': 0.50,
+    'personality_openness': 0.50,
+    'feedback_style_match': 0.20,
+    'availability_match': 0.20,
+    'values_match': 0.20,
     'barriers_support_match': 0.05,
-    'industry_match': 0.10,  # NEW WEIGHT - adjust as desired
-    'department_match': 0.10 # NEW WEIGHT - adjust as desired
+    'industry_match': 0.80,
+    'department_match': 0.80
 }
 
 # Normalize weights to sum to 1.0
@@ -103,7 +102,6 @@ if total_weight_sum > 0:
 logging.info(f"Normalized Weights (sum={sum(WEIGHTS.values()):.2f}): {WEIGHTS}")
 
 
-# --- All your matching algorithm functions (unchanged from your original) ---
 def get_embedding(text):
     """Generates an embedding for the given text using Gemini's text-embedding-004 model."""
     if not text:
@@ -157,7 +155,6 @@ def calculate_list_overlap(list1: list, list2: list) -> float:
     return common_elements / len(s1) if len(s1) > 0 else 0.0
 
 
-# --- Main Matching Function (UPDATED) ---
 def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> list:
     matches = []
 
@@ -261,7 +258,7 @@ def match_mentee_to_mentors(mentee_profile: dict, mentors_df: pd.DataFrame) -> l
         })
 
     matches.sort(key=lambda x: x['total_score'], reverse=True)
-    return matches  # Returns all sorted matches. We'll limit and generate explanations in main.
+    return matches
 
 
 def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.DataFrame,
@@ -331,55 +328,55 @@ def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.Data
     logging.info("Matching process completed.")
 
 
-if __name__ == "__main__":
-    # Configure logging
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
-
-    logging.info("Fetching data from Supabase...")
-
-    mentors_df_supabase = fetch_all_mentors_from_supabase()
-    mentees_df_supabase = fetch_all_mentees_from_supabase()
-
-    if mentors_df_supabase.empty:
-        logging.error(
-            "No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
-        exit()
-    if mentees_df_supabase.empty:
-        logging.error(
-            "No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
-        exit()
-
-    logging.info(f"Mentors fetched from Supabase: {len(mentors_df_supabase)}")
-    logging.info(f"Mentees fetched from Supabase: {len(mentees_df_supabase)}")
-
-    # Limit to top 3 matches before storing and generating explanations
-    MATCH_LIMIT_PER_MENTEE = 3
-
-    for _, mentee_profile_df_row in mentees_df_supabase.iterrows():
-        mentee_profile = mentee_profile_df_row.to_dict()
-        mentee_id = str(mentee_profile['id'])
-
-        logging.info(
-            f"--- Processing Mentee: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
-
-        try:
-            all_matches_for_mentee = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
-
-            # Apply the limit here
-            top_matches_for_mentee = all_matches_for_mentee[:MATCH_LIMIT_PER_MENTEE]
-
-            if not top_matches_for_mentee:
-                logging.info(f"No top matches found for mentee ID: {mentee_id}.")
-                continue
-
-            # Pass both dataframes to store_matches_in_supabase for explanation generation
-            store_matches_in_supabase(mentee_id, top_matches_for_mentee, mentees_df_supabase,
-                                      mentors_df_supabase)
-            logging.info(
-                f"Successfully processed and stored top {len(top_matches_for_mentee)} matches for mentee ID: {mentee_id}")
-
-        except Exception as e:
-            logging.error(f"Error processing mentee ID {mentee_id}: {e}")
+# if __name__ == "__main__":
+#     # Configure logging
+#     logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+#
+#     logging.info("Fetching data from Supabase...")
+#
+#     mentors_df_supabase = fetch_all_mentors_from_supabase()
+#     mentees_df_supabase = fetch_all_mentees_from_supabase()
+#
+#     if mentors_df_supabase.empty:
+#         logging.error(
+#             "No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
+#         exit()
+#     if mentees_df_supabase.empty:
+#         logging.error(
+#             "No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
+#         exit()
+#
+#     logging.info(f"Mentors fetched from Supabase: {len(mentors_df_supabase)}")
+#     logging.info(f"Mentees fetched from Supabase: {len(mentees_df_supabase)}")
+#
+#     # Limit to top 3 matches before storing and generating explanations
+#     MATCH_LIMIT_PER_MENTEE = 3
+#
+#     for _, mentee_profile_df_row in mentees_df_supabase.iterrows():
+#         mentee_profile = mentee_profile_df_row.to_dict()
+#         mentee_id = str(mentee_profile['id'])
+#
+#         logging.info(
+#             f"--- Processing Mentee: {mentee_profile.get('name', 'Unnamed Mentee')} (ID: {mentee_id}) ---")
+#
+#         try:
+#             all_matches_for_mentee = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
+#
+#             # Apply the limit here
+#             top_matches_for_mentee = all_matches_for_mentee[:MATCH_LIMIT_PER_MENTEE]
+#
+#             if not top_matches_for_mentee:
+#                 logging.info(f"No top matches found for mentee ID: {mentee_id}.")
+#                 continue
+#
+#             # Pass both dataframes to store_matches_in_supabase for explanation generation
+#             store_matches_in_supabase(mentee_id, top_matches_for_mentee, mentees_df_supabase,
+#                                       mentors_df_supabase)
+#             logging.info(
+#                 f"Successfully processed and stored top {len(top_matches_for_mentee)} matches for mentee ID: {mentee_id}")
+#
+#         except Exception as e:
+#             logging.error(f"Error processing mentee ID {mentee_id}: {e}")
 
 # if __name__ == "__main__":
 #     print("\n--- Fetching data from Supabase ---")
