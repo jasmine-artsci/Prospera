@@ -4,8 +4,6 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Card from "./Cards";
 
-const MENTEE_ID = "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf";
-
 const mentorsData = [
   {
     name: "Sarah Johnson",
@@ -45,15 +43,13 @@ const MatchingMentors = () => {
       const { data, error } = await supabase
         .from("mentee_mentor_matches")
         .select(`*,mentors:mentor_id (*)`)
-        .eq("mentee_id", MENTEE_ID)
+        .eq("mentee_id", "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf")
         .order("match_score", { ascending: false })
         .limit(3);
 
       if (error) {
-        // alert('No');
         console.error("Error fetching mentors:", error.message);
       } else {
-        // alert('yes');
         console.log("Fetched mentors:", data);
         setMentors(data);
       }

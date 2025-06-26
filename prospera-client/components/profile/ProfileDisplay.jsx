@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { supabase } from '@/lib/supabase';
 
@@ -115,6 +115,53 @@ const ProfileDisplay = () => {
     //   location.reload(); 
   };
 
+    const [mentors, setMentors] = useState([]);
+    const [loading, setLoading] = useState(true);
+    useEffect(() => {
+      const fetchMentors = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("mentee_mentor_matches")
+          .select(`*,mentors:mentor_id (*)`)
+          .eq("mentee_id", "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf")
+          .order("match_score", { ascending: false })
+          .limit(3);
+  
+        if (error) {
+          console.error("Error fetching mentors:", error.message);
+        } else {
+          console.log("Fetched mentors:", data);
+          setMentors(data);
+        }
+  
+        setLoading(false);
+      };
+  
+      fetchMentors();
+    }, []);
+
+    const [mentee, setMentee] = useState([]);
+    useEffect(() => {
+      const fetchMentee = async () => {
+        setLoading(true);
+        const { data, error } = await supabase
+          .from("mentees")
+          .select("*")
+          .eq("id", "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf")
+          .single();
+  
+        if (error) {
+          console.error("Error fetching Mentee:", error.message);
+        } else {
+          console.log("Fetched Mentee:", data);
+          setMentee(data);
+        }
+  
+        setLoading(false);
+      };
+  
+      fetchMentee();
+    }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100">
@@ -235,40 +282,34 @@ const ProfileDisplay = () => {
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Matched Mentors</h2>
               
               <div className="space-y-6">
-                {matchedMentors.map((mentor) => (
-                  <div key={mentor.id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all duration-200">
-                    <div className="flex justify-between items-start mb-4">
-                      <div>
-                        <h3 className="text-xl font-semibold text-gray-800">{mentor.name}</h3>
-                        <p className="text-emerald-600 font-medium">{mentor.profession}</p>
-                        <p className="text-gray-600">{mentor.company} • {mentor.experience} experience</p>
-                      </div>
-                      <div className="flex items-center space-x-1">
-                        <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <span className="text-gray-600 font-medium">{mentor.rating}</span>
-                      </div>
-                    </div>
-                    
-                    <div className="mb-4">
-                      <p className="text-gray-600 font-medium mb-2">Skills:</p>
-                      <div className="flex flex-wrap gap-2">
-                        {mentor.skills.map((skill, index) => (
-                          <span key={index} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">
-                            {skill}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div>
-                      <a href={`mailto:${mentor.email}`} className="text-emerald-600 hover:text-emerald-700 font-medium">
-                        {mentor.email}
-                      </a>
-                    </div>
+                {mentors.map(({ mentors: mentor }) => (
+              <div key={mentor.mentor_id} className="border border-gray-200 rounded-lg p-6 hover:shadow-md">
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <h3 className="text-xl font-semibold text-gray-800">{mentor.name}</h3>
+                    <p className="text-emerald-600 font-medium">{mentor.department || "Mentor"}</p>
+                    <p className="text-gray-600">{mentor.industry || "N/A"} • {mentor.experience || "Experience N/A"}</p>
                   </div>
-                ))}
+                  <div className="flex items-center space-x-1">
+                    <svg className="w-5 h-5 text-yellow-400" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    {/* <span className="text-gray-600 font-medium">{mentor.rating || match_score?.toFixed(1)}</span> */}
+                  </div>
+                </div>
+                <div className="mb-4">
+                  <p className="text-gray-600 font-medium mb-2">Skills:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {(mentor.coaching_skills || []).map((skill, index) => (
+                      <span key={index} className="px-3 py-1 bg-emerald-100 text-emerald-700 rounded-full text-sm font-medium">{skill}</span>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <a href={`mailto:${mentor.email}`} className="text-emerald-600 hover:text-emerald-700 font-medium">{mentor.email}</a>
+                </div>
+              </div>
+            ))}
               </div>
             </div>
           </div>
@@ -297,11 +338,11 @@ const ProfileDisplay = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Personal Background</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Country:</span> {questionnaireAnswers.personalBackground.countryOfOrigin}</p>
-                      <p><span className="font-medium">English Level:</span> {questionnaireAnswers.personalBackground.englishProficiency}</p>
+                      <p><span className="font-medium">Country:</span> {mentee.origin}</p>
+                      <p><span className="font-medium">English Level:</span> {mentee.english_cefr}</p>
                       <p><span className="font-medium">Unclear Areas:</span></p>
                       <ul className="list-disc list-inside ml-4 text-gray-600">
-                        {questionnaireAnswers.personalBackground.unclearAspects.map((aspect, index) => (
+                        {mentee.unclear_canadian_landscape.map((aspect, index) => (
                           <li key={index}>{aspect}</li>
                         ))}
                       </ul>
@@ -312,9 +353,10 @@ const ProfileDisplay = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Personality & Work Style</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Extraverted:</span> {questionnaireAnswers.personalityAndWorkStyle.extravertedEnthusiastic}/5</p>
-                      <p><span className="font-medium">Dependable:</span> {questionnaireAnswers.personalityAndWorkStyle.dependableSelfDisciplined}/5</p>
-                      <p><span className="font-medium">Open to new experiences:</span> {questionnaireAnswers.personalityAndWorkStyle.openToNewExperiences}/5</p>
+                      <p><span className="font-medium">Extraverted:</span> {mentee.extraversion}/5</p>
+                      <p><span className="font-medium">Openness:</span> {mentee.openness}/5</p>
+                      <p><span className="font-medium">Open to new experiences:</span> {mentee.conscientiousness}/5</p>
+                      <p><span className="font-medium">Emotional Stability:</span> {mentee.emotional_stability}/5</p>
                     </div>
                   </div>
 
@@ -322,10 +364,15 @@ const ProfileDisplay = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Career Goals & Values</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Next Target:</span> {questionnaireAnswers.careerGoalsAndValues.nextJobTarget}</p>
+                      <p><span className="font-medium">Next Target:</span></p>
+                      <ol className="list-decimal list-inside ml-4 text-gray-600">
+                        {mentee.skills_to_develop.map((value, index) => (
+                          <li key={index}>{value}</li>
+                        ))}
+                      </ol>
                       <p><span className="font-medium">Top Values:</span></p>
                       <ol className="list-decimal list-inside ml-4 text-gray-600">
-                        {questionnaireAnswers.careerGoalsAndValues.professionalValuesRanking.map((value, index) => (
+                        {mentee.skills_to_develop.map((value, index) => (
                           <li key={index}>{value}</li>
                         ))}
                       </ol>
@@ -338,13 +385,13 @@ const ProfileDisplay = () => {
                     <div className="space-y-2 text-sm">
                       <p><span className="font-medium">Barriers:</span></p>
                       <ul className="list-disc list-inside ml-4 text-gray-600">
-                        {questionnaireAnswers.challengesAndDevelopment.barriersYouFace.map((barrier, index) => (
+                        {mentee.current_challenges.map((barrier, index) => (
                           <li key={index}>{barrier}</li>
                         ))}
                       </ul>
                       <p><span className="font-medium">Skills to Develop:</span></p>
                       <ul className="list-disc list-inside ml-4 text-gray-600">
-                        {questionnaireAnswers.challengesAndDevelopment.competenciesToDevelop.map((skill, index) => (
+                        {mentee.skills_to_develop.map((skill, index) => (
                           <li key={index}>{skill}</li>
                         ))}
                       </ul>
@@ -355,10 +402,10 @@ const ProfileDisplay = () => {
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Communication Preferences</h3>
                     <div className="space-y-2 text-sm">
-                      <p><span className="font-medium">Feedback Style:</span> {questionnaireAnswers.communicationPreferences.feedbackStyle}</p>
+                      <p><span className="font-medium">Feedback Style:</span> {mentee.feedback_style}</p>
                       <p><span className="font-medium">Available Times:</span></p>
                       <ul className="list-disc list-inside ml-4 text-gray-600">
-                        {questionnaireAnswers.communicationPreferences.availableTimeSlots.map((slot, index) => (
+                        {mentee.availability.map((slot, index) => (
                           <li key={index}>{slot}</li>
                         ))}
                       </ul>
