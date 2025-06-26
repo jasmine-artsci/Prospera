@@ -24,6 +24,7 @@ const Header = ({
   useEffect(()=>{
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
+      sessionStorage.setItem("user", JSON.stringify(user));
       setLoading(false);
     });
 

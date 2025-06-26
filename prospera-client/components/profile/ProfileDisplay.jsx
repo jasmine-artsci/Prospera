@@ -22,6 +22,11 @@ const ProfileDisplay = () => {
     postalCode: "M5V 3A1"
   });
 
+  const userFromSession = JSON.parse(sessionStorage.getItem("user"));
+
+  // "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf"
+  console.log(userFromSession.id);
+
   const [bio, setBio] = useState("I'm a passionate software engineering student from China, currently pursuing my Master's degree at the University of Toronto. I moved to Canada two years ago and am excited to build my career in the tech industry while contributing to innovative projects that make a difference.");
 
   // Static matched mentors data
@@ -123,7 +128,7 @@ const ProfileDisplay = () => {
         const { data, error } = await supabase
           .from("mentee_mentor_matches")
           .select(`*,mentors:mentor_id (*)`)
-          .eq("mentee_id", "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf")
+          .eq("mentee_id", userFromSession.id)
           .order("match_score", { ascending: false })
           .limit(3);
   

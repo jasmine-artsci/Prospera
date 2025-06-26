@@ -4,6 +4,8 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Card from "./Cards";
 
+const userFromSession = JSON.parse(sessionStorage.getItem("user"));
+
 const mentorsData = [
   {
     name: "Sarah Johnson",
@@ -43,7 +45,7 @@ const MatchingMentors = () => {
       const { data, error } = await supabase
         .from("mentee_mentor_matches")
         .select(`*,mentors:mentor_id (*)`)
-        .eq("mentee_id", "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf")
+        .eq("mentee_id", userFromSession.id)
         .order("match_score", { ascending: false })
         .limit(3);
 
