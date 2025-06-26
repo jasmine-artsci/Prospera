@@ -8,27 +8,6 @@ const Card = ({ name, bio, image, reason, email }) => {
   const [isContactModalOpen, setIsContactModalOpen] = useState(false);
   const [message, setMessage] = useState("");
 
-//   const handleSend = async () => {
-//   try {
-//     const response = await fetch("/api/emailContact", {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({ name, message, email }),
-//     });
-
-//     if (response.ok) {
-//       alert("Message sent!");
-//       setMessage("");
-//       setIsContactModalOpen(false);
-//     } else {
-//       alert("Failed to send message.");
-//     }
-//   } catch (error) {
-//     console.error("Send error:", error);
-//     alert("Something went wrong.");
-//   }
-// };
-
 const handleSend = async () => {
     alert("Message sent!");
     setMessage("");
@@ -72,7 +51,7 @@ const handleSend = async () => {
       {/* View More Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
-          <div className="bg-white rounded-xl p-6 max-w-md w-[90%] shadow-lg">
+          <div className="bg-white rounded-xl p-6 max-w-5xl w-[90%] shadow-2xl">
             <div className="flex justify-center mb-4">
               <Image
                 src={image}
@@ -85,7 +64,7 @@ const handleSend = async () => {
             <h2 className="text-xl font-bold mb-2 text-gray-800">{name}</h2>
             <p className="text-gray-700 text-sm">{bio}</p>
             <h3 className="font-bold mt-4 text-green-800">Why is this a good match?</h3>
-            <p className="text-sm text-green-700">{reason}</p>
+            <p className="text-sm text-green-700 text-justify">{reason}</p>
             <div className="text-right mt-4">
               <button
                 onClick={() => setIsModalOpen(false)}
