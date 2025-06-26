@@ -151,9 +151,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
       ...prev,
       [questionId]: value
     }));
-  };
-
-  
+  };  
 
   const currentStepData = role === "mentee" ? stepDataMentee.find(step => step.step === currentStep) : stepDataMentor.find(step => step.step === currentStep);
 
