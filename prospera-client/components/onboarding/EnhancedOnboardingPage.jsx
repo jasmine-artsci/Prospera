@@ -148,7 +148,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
     router.push("/");
     // Show success message
     // alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
-
   };
 
   const handleInputChange = (questionId, value) => {
@@ -251,7 +250,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
             <div key={question.id}>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Question {index + 1}
-
               </h2>
               <div className="bg-gray-100 rounded-lg p-6 min-h-[120px] flex items-center mb-4">
                 <p className="text-gray-700 text-lg">
@@ -336,7 +334,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                     <div className="flex justify-start items-center">
                       {question.labels.map((label, labelIndex) => (
                         <label key={labelIndex} className="flex flex-col mx-15 items-center space-y-2 cursor-pointer">
-
                           <input
                             type="radio"
                             name={question.id}
@@ -345,7 +342,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                             checked={formData[question.id] == labelIndex + 1}
                             onChange={(e) => handleInputChange(question.id, parseInt(e.target.value))}
                             required
-
                           />
                           <span className="text-sm text-gray-600 text-center">{label}</span>
                           <span className="text-xs text-gray-400">{labelIndex + 1}</span>
@@ -366,7 +362,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                       value={formData[question.id] || ""}
                       onChange={(e) => handleInputChange(question.id, e.target.value)}
                       required
-
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       {(formData[question.id] || "").length}/{question.maxLength} characters
@@ -465,7 +460,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                         <div className="flex justify-start items-center">
                           {[1, 2, 3, 4, 5].map((value) => (
                             <label key={value} className="flex flex-col mx-15 items-center space-y-1 cursor-pointer">
-
                               <input
                                 type="radio"
                                 name={`${question.id}_${optIndex}`}
@@ -474,7 +468,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                                 checked={formData[`${question.id}_${optIndex}`] == value}
                                 onChange={(e) => handleInputChange(`${question.id}_${optIndex}`, parseInt(e.target.value))}
                                 required
-
                               />
                               <span className="text-xs text-gray-400">{value}</span>
                             </label>
@@ -539,7 +532,6 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                           checked={formData[question.id] === option}
                           onChange={(e) => handleInputChange(question.id, e.target.value)}
                           required
-
                         />
                         <span className="text-gray-700">{option}</span>
                       </label>
