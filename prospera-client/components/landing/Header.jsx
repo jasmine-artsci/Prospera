@@ -23,18 +23,9 @@ const Header = ({
   useEffect(()=>{
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user);
-      sessionStorage.setItem("user", JSON.stringify(user));
       setLoading(false);
     });
     console.log("Header::", user);
-
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user || null);
-    });
-
-    return () => {
-      listener.subscription.unsubscribe();
-    };
   }, [])
 
   const [isAnimating, setIsAnimating] = useState(false);

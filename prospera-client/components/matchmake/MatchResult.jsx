@@ -7,7 +7,7 @@ export default function MatchResult({id}) {
   const [error, setError] = useState("");
   useEffect(() => {
     const getMatches = async () => {  
-      try {
+      try { 
         const data = await fetchMatches(id);
         setMatches(data);
         console.log("MATCHED DATA::::::::::::::::::", data);

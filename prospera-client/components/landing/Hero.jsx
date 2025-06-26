@@ -65,7 +65,7 @@ const Hero = ({ id }) => {
           <button
             onMouseEnter={() => setHoveredButton('mentor')}
             onMouseLeave={() => setHoveredButton(null)}
-            onClick={()=>router.push("/sign-up")}
+            onClick={()=>router.push("/matchingMentors")}
             className={`group relative px-5 py-3 bg-emerald-600 text-white font-semibold rounded-xl text-lg transition-all duration-300 overflow-hidden ${
               hoveredButton === 'mentor' 
                 ? 'shadow-2xl transform scale-105' 

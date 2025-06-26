@@ -18,7 +18,7 @@ const handleSend = async () => {
   return (
     <>
       {/* Card */}
-      <div className="max-w-sm bg-white rounded-2xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-xl">
+      <div className="w-80 flex flex-col justify-around  bg-white rounded-2xl shadow-md overflow-hidden transition-transform duration-300 hover:scale-105 hover:shadow-xl">
         <div className="flex justify-center mt-4">
           <Image
             src={image}
