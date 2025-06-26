@@ -44,10 +44,10 @@ const MatchingMentors = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("mentee_mentor_matches")
-        .select("*")
-        .eq("mentee_id", MENTEE_ID)
-        .order("match_score", { ascending: false })
-        .limit(3);
+        .select("*");
+        // .eq("mentee_id", MENTEE_ID)
+        // .order("match_score", { ascending: false })
+        // .limit(3)
 
       if (error) {
         alert('No');
