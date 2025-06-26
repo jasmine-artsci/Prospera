@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import Card from "./Cards";
 
-const MENTEE_ID = "ea5e29c8-e1fd-4680-9f60-39897453cdf0";
+const MENTEE_ID = "f48102a8-16bb-46b9-b4a9-48f6d7c3dbbf";
 
 const mentorsData = [
   {
@@ -44,16 +44,16 @@ const MatchingMentors = () => {
       setLoading(true);
       const { data, error } = await supabase
         .from("mentee_mentor_matches")
-        .select("*");
-        // .eq("mentee_id", MENTEE_ID)
-        // .order("match_score", { ascending: false })
-        // .limit(3)
+        .select(`*,mentors:mentor_id (*)`)
+        .eq("mentee_id", MENTEE_ID)
+        .order("match_score", { ascending: false })
+        .limit(3);
 
       if (error) {
-        alert('No');
+        // alert('No');
         console.error("Error fetching mentors:", error.message);
       } else {
-        alert('yes');
+        // alert('yes');
         console.log("Fetched mentors:", data);
         setMentors(data);
       }
@@ -70,16 +70,17 @@ const MatchingMentors = () => {
         Matching Mentors For You
       </h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 justify-items-center">
-        {mentorsData.map((mentor, index) => (
+        {mentors.map((mentor, index) => (
           <Card
             key={index}
-            name={mentor.name}
-            bio={mentor.bio}
-            image={mentor.image}
-            reason={mentor.reason}
+            name={mentor.mentors.name}
+            bio={mentor.mentors.goal_support}
+            // image={mentor.mentors.image}
+            image="/mentor-images/mentor-image.png"
+            reason={mentor.explanation_text}
             onViewDetails={mentor.onViewDetails}
             onContact={mentor.onContact}
-            email={mentor.email}
+            email={mentor.mentors.email}
           />
         ))}
       </div>
