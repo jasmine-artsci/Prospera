@@ -191,7 +191,7 @@ const ProfileDisplay = () => {
                         type={key === 'dateOfBirth' ? 'date' : key === 'email' ? 'email' : 'text'}
                         value={value}
                         onChange={(e) => handlePersonalInfoChange(key, e.target.value)}
-                        className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-emerald-200 focus:ring-4 transition-all duration-200"
+                        className="w-full p-3 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-emerald-200 focus:ring-4 transition-all duration-200 text-gray-800"
                       />
                     ) : (
                       <div className="p-3 bg-gray-50 rounded-lg text-gray-800">
@@ -220,7 +220,7 @@ const ProfileDisplay = () => {
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows="6"
-                  className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-emerald-200 focus:ring-4 transition-all duration-200 resize-none"
+                  className="w-full p-4 border-2 border-gray-200 rounded-lg focus:border-emerald-500 focus:ring-emerald-200 focus:ring-4 transition-all duration-200 resize-none text-gray-800"
                   placeholder="Tell us about yourself..."
                 />
               ) : (
@@ -296,11 +296,11 @@ const ProfileDisplay = () => {
                   {/* Personal Background */}
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Personal Background</h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-sm text-gray-800">
                       <p><span className="font-medium">Country:</span> {questionnaireAnswers.personalBackground.countryOfOrigin}</p>
                       <p><span className="font-medium">English Level:</span> {questionnaireAnswers.personalBackground.englishProficiency}</p>
                       <p><span className="font-medium">Unclear Areas:</span></p>
-                      <ul className="list-disc list-inside ml-4 text-gray-600">
+                      <ul className="list-disc list-inside ml-4 text-gray-800">
                         {questionnaireAnswers.personalBackground.unclearAspects.map((aspect, index) => (
                           <li key={index}>{aspect}</li>
                         ))}
@@ -311,7 +311,7 @@ const ProfileDisplay = () => {
                   {/* Personality & Work Style */}
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Personality & Work Style</h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-sm text-gray-800">
                       <p><span className="font-medium">Extraverted:</span> {questionnaireAnswers.personalityAndWorkStyle.extravertedEnthusiastic}/5</p>
                       <p><span className="font-medium">Dependable:</span> {questionnaireAnswers.personalityAndWorkStyle.dependableSelfDisciplined}/5</p>
                       <p><span className="font-medium">Open to new experiences:</span> {questionnaireAnswers.personalityAndWorkStyle.openToNewExperiences}/5</p>
@@ -321,10 +321,10 @@ const ProfileDisplay = () => {
                   {/* Career Goals */}
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Career Goals & Values</h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-sm text-gray-800">
                       <p><span className="font-medium">Next Target:</span> {questionnaireAnswers.careerGoalsAndValues.nextJobTarget}</p>
                       <p><span className="font-medium">Top Values:</span></p>
-                      <ol className="list-decimal list-inside ml-4 text-gray-600">
+                      <ol className="list-decimal list-inside ml-4 text-gray-800">
                         {questionnaireAnswers.careerGoalsAndValues.professionalValuesRanking.map((value, index) => (
                           <li key={index}>{value}</li>
                         ))}
@@ -335,15 +335,15 @@ const ProfileDisplay = () => {
                   {/* Challenges */}
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Challenges & Development</h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-sm text-gray-800">
                       <p><span className="font-medium">Barriers:</span></p>
-                      <ul className="list-disc list-inside ml-4 text-gray-600">
+                      <ul className="list-disc list-inside ml-4 text-gray-800">
                         {questionnaireAnswers.challengesAndDevelopment.barriersYouFace.map((barrier, index) => (
                           <li key={index}>{barrier}</li>
                         ))}
                       </ul>
                       <p><span className="font-medium">Skills to Develop:</span></p>
-                      <ul className="list-disc list-inside ml-4 text-gray-600">
+                      <ul className="list-disc list-inside ml-4 text-gray-800">
                         {questionnaireAnswers.challengesAndDevelopment.competenciesToDevelop.map((skill, index) => (
                           <li key={index}>{skill}</li>
                         ))}
@@ -354,10 +354,10 @@ const ProfileDisplay = () => {
                   {/* Communication */}
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-700 mb-3">Communication Preferences</h3>
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-sm text-gray-800">
                       <p><span className="font-medium">Feedback Style:</span> {questionnaireAnswers.communicationPreferences.feedbackStyle}</p>
                       <p><span className="font-medium">Available Times:</span></p>
-                      <ul className="list-disc list-inside ml-4 text-gray-600">
+                      <ul className="list-disc list-inside ml-4 text-gray-800">
                         {questionnaireAnswers.communicationPreferences.availableTimeSlots.map((slot, index) => (
                           <li key={index}>{slot}</li>
                         ))}
