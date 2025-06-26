@@ -15,11 +15,13 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
     console.log("Received in parent:", newDates);
   };
 
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
-
   const router = useRouter();
+
   // Sample themes and questions for each step
+
 
   const [formData, setFormData] = useState({});
   const [error, setError] = useState("");
@@ -74,6 +76,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
           },
           feedback_style: formData.q16 || null,
           availability: formData.q17 || []
+
         }
       },
       rawFormData: formData,
@@ -84,6 +87,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
       }
     };
     console.log("formData.q15_0::::::::::::::::::::::::::::::::::", formData.q15_0);
+
     // Output structured JSON to console
     console.log("=== ONBOARDING DATA ===");
     console.log(JSON.stringify(onboardingData, null, 2));
@@ -144,6 +148,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
     router.push("/");
     // Show success message
     // alert(`Onboarding completed successfully! Welcome to Prospéra!\n\nAnswered ${onboardingData.completionStats.answeredQuestions}/15 questions (${onboardingData.completionStats.completionPercentage}% complete)\n\nCheck the console for detailed JSON output.`);
+
   };
 
   const handleInputChange = (questionId, value) => {
@@ -246,6 +251,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
             <div key={question.id}>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">
                 Question {index + 1}
+
               </h2>
               <div className="bg-gray-100 rounded-lg p-6 min-h-[120px] flex items-center mb-4">
                 <p className="text-gray-700 text-lg">
@@ -330,6 +336,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                     <div className="flex justify-start items-center">
                       {question.labels.map((label, labelIndex) => (
                         <label key={labelIndex} className="flex flex-col mx-15 items-center space-y-2 cursor-pointer">
+
                           <input
                             type="radio"
                             name={question.id}
@@ -338,6 +345,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                             checked={formData[question.id] == labelIndex + 1}
                             onChange={(e) => handleInputChange(question.id, parseInt(e.target.value))}
                             required
+
                           />
                           <span className="text-sm text-gray-600 text-center">{label}</span>
                           <span className="text-xs text-gray-400">{labelIndex + 1}</span>
@@ -358,6 +366,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                       value={formData[question.id] || ""}
                       onChange={(e) => handleInputChange(question.id, e.target.value)}
                       required
+
                     />
                     <p className="text-sm text-gray-500 mt-1">
                       {(formData[question.id] || "").length}/{question.maxLength} characters
@@ -456,6 +465,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                         <div className="flex justify-start items-center">
                           {[1, 2, 3, 4, 5].map((value) => (
                             <label key={value} className="flex flex-col mx-15 items-center space-y-1 cursor-pointer">
+
                               <input
                                 type="radio"
                                 name={`${question.id}_${optIndex}`}
@@ -464,6 +474,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                                 checked={formData[`${question.id}_${optIndex}`] == value}
                                 onChange={(e) => handleInputChange(`${question.id}_${optIndex}`, parseInt(e.target.value))}
                                 required
+
                               />
                               <span className="text-xs text-gray-400">{value}</span>
                             </label>
@@ -514,6 +525,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                 )}
 
 
+
                 {/* Radio Buttons */}
                 {question.type === "radio" && (
                   <div className="space-y-3">
@@ -527,6 +539,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                           checked={formData[question.id] === option}
                           onChange={(e) => handleInputChange(question.id, e.target.value)}
                           required
+
                         />
                         <span className="text-gray-700">{option}</span>
                       </label>
@@ -537,6 +550,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                 {/* Time Selector */}
                 {question.type === "time-selector" && (
                   // <DatePicker onChange={handleDateChange} />
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {question.options.map((timeSlot, optIndex) => (
                       <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">

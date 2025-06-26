@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h1>Create Profile</h1>
+<form method="post">
+  <div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" name="name" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Headline</label>
+    <input type="text" name="headline" class="form-control" placeholder="e.g. Software Engineer at ACME Inc.">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Bio</label>
+    <textarea name="bio" class="form-control" rows="4"></textarea>
+  </div>
+  <button type="submit" class="btn btn-success">Create</button>
+</form>
+{% endblock %}
