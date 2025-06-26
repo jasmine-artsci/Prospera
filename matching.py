@@ -1,3 +1,5 @@
+import json
+
 import pandas as pd
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
@@ -327,6 +329,87 @@ def store_matches_in_supabase(mentee_id: str, matches: list, mentees_df: pd.Data
 
     logging.info("Matching process completed.")
 
+def main():
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+
+    logging.info("Fetching data from Supabase...")
+
+    mentors_df_supabase = fetch_all_mentors_from_supabase()
+    mentees_df_supabase = fetch_all_mentees_from_supabase()
+
+    if mentors_df_supabase.empty:
+        logging.error(
+            "No mentors found or error fetching mentors from Supabase. Cannot proceed with matching.")
+        return
+    if mentees_df_supabase.empty:
+        logging.error(
+            "No mentees found or error fetching mentees from Supabase. Cannot proceed with matching.")
+        return
+
+    logging.info(f"Mentors fetched from Supabase: {len(mentors_df_supabase)}")
+    logging.info(f"Mentees fetched from Supabase: {len(mentees_df_supabase)}")
+
+    # Collect all match results for JSON output
+    all_mentee_match_results = []
+
+    # Limit to top 3 matches before storing and generating explanations
+    MATCH_LIMIT_PER_MENTEE = 3
+
+    for _, mentee_profile_df_row in mentees_df_supabase.iterrows():
+        mentee_profile = mentee_profile_df_row.to_dict()
+        mentee_id = str(mentee_profile['id'])
+        mentee_name = mentee_profile.get('name', 'Unnamed Mentee') # Get mentee name for output
+
+        logging.info(f"--- Processing Mentee: {mentee_name} (ID: {mentee_id}) ---")
+
+        mentee_results = {
+            "mentee_id": mentee_id,
+            "mentee_name": mentee_name,
+            "matches": []
+        }
+
+        try:
+            all_matches_for_mentee = match_mentee_to_mentors(mentee_profile, mentors_df_supabase)
+            top_matches_for_mentee = all_matches_for_mentee[:MATCH_LIMIT_PER_MENTEE]
+
+            if not top_matches_for_mentee:
+                logging.info(f"No top matches found for mentee ID: {mentee_id}.")
+                mentee_results["status"] = "No matches found"
+            else:
+                # Store matches in Supabase
+                store_matches_in_supabase(mentee_id, top_matches_for_mentee, mentees_df_supabase,
+                                          mentors_df_supabase)
+                logging.info(f"Successfully processed and stored top {len(top_matches_for_mentee)} matches for mentee ID: {mentee_id}")
+                mentee_results["status"] = "Matches processed and stored"
+
+                # Prepare matches for JSON output
+                for match in top_matches_for_mentee:
+                    mentor_data = mentors_df_supabase[mentors_df_supabase['id'] == match['mentor_id']].iloc[0]
+                    mentee_results["matches"].append({
+                        "mentor_id": match['mentor_id'],
+                        "mentor_name": mentor_data.get('name', 'Unknown'),
+                        "match_score": match['total_score'],
+                        "explanation_text": match.get('explanation_text', 'Explanation not available.'),
+                        "score_components": match['score_components'] # Include component scores if desired
+                    })
+
+        except Exception as e:
+            logging.error(f"Error processing mentee ID {mentee_id}: {e}", exc_info=True)
+            mentee_results["status"] = f"Error: {e}"
+
+        all_mentee_match_results.append(mentee_results)
+
+    logging.info("Matching process completed.")
+
+    # Print all results in JSON format
+    print("\n--- ALL MENTEE MATCHING RESULTS (JSON) ---")
+    print(json.dumps(all_mentee_match_results, indent=2))
+    print("------------------------------------------")
+
+
+if __name__ == "__main__":
+    main()
 
 # if __name__ == "__main__":
 #     # Configure logging
