@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { supabase } from "@/lib/supabase";
-import stepData from './stepData';
+import stepDataMentee from './stepDataMentee';
+import stepDataMentor from "./stepDataMentor";
 import { useRouter } from "next/navigation";
 import DatePicker from "./DatePicker";
 
@@ -14,10 +15,11 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
     console.log("Received in parent:", newDates);
   };
 
+
   const [currentStep, setCurrentStep] = useState(1);
   const totalSteps = 5;
-
   const router = useRouter();
+
   // Sample themes and questions for each step
 
 
@@ -44,8 +46,8 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
       responses: {
         personalBackground: {
           origin: formData.q1 || null,
-          english_cefr: formData.q2 || null,
-          unclear_canadian_landscape: formData.q3 || [],
+          [role === "mentor" ? "english_level" : "english_cefr"]: formData.q2 || null,
+          [role === "mentor" ? "canadian_landscape_help" : "unclear_canadian_landscape"]: formData.q3 || [],
           industry: formData.q4 || [],
           department: formData.q5 || [],
         },
@@ -55,25 +57,26 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
           openness: formData.q8 || null
         },
         careerGoalsAndValues: {
-          goal_target: formData.q9 || null,
+          [role === "mentor" ? "goal_support" : "goal_target"]: formData.q9 || null,
           values: formData.q10 || [],
           emotional_stability: formData.q11 || null
         },
         challengesAndDevelopment: {
-          barriers_faced: formData.q12 || [],
-          current_challenges: formData.q13 || [],
-          skills_to_develop: formData.q14 || []
+          [role === "mentor" ? "support_areas" : "barriers_faced"]: formData.q12 || [],
+          [role === "mentor" ? "challenges_help" : "current_challenges"]: formData.q13 || [],
+          [role === "mentor" ? "coaching_skills" : "skills_to_develop"]: formData.q14 || []
         },
         communicationPreferences: {
           preferred_channel: {
-            inPersonMeetings: formData.q15_0 || null,
-            videoCalls: formData.q15_1 || null,
-            phoneCalls: formData.q15_2 || null,
-            textChatMessaging: formData.q15_3 || null,
-            emailExchanges: formData.q15_4 || null
+            inPersonMeetings: formData.q15_0 || false,
+            videoCalls: formData.q15_1 || false,
+            phoneCalls: formData.q15_2 || false,
+            textChatMessaging: formData.q15_3 || false,
+            emailExchanges: formData.q15_4 || false
           },
           feedback_style: formData.q16 || null,
-          availability: selectedDates || []
+          availability: formData.q17 || []
+
         }
       },
       rawFormData: formData,
@@ -83,6 +86,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
         completionPercentage: Math.round((Object.keys(formData).length / 15) * 100)
       }
     };
+    console.log("formData.q15_0::::::::::::::::::::::::::::::::::", formData.q15_0);
 
     // Output structured JSON to console
     console.log("=== ONBOARDING DATA ===");
@@ -110,6 +114,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       
+      
       const payload = {
         ...onboardingData.responses.personalBackground,
         ...onboardingData.responses.personalityAndWorkStyle,
@@ -135,9 +140,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
           .upsert({ id: user.id, name: name, ...payload }, {onConflict: "id"});
         setError(error);
       }
-
       if (error) console.error('❌ Upsert failed:', error);
-
     }
 
     fetchData();
@@ -152,9 +155,9 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
       ...prev,
       [questionId]: value
     }));
-  };
+  };  
 
-  const currentStepData = stepData.find(step => step.step === currentStep);
+  const currentStepData = role === "mentee" ? stepDataMentee.find(step => step.step === currentStep) : stepDataMentor.find(step => step.step === currentStep);
 
   return (
     <div className="min-h-screen bg-gray-200 flex">
@@ -167,7 +170,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
 
         {/* Step Navigation Buttons */}
         <div className="space-y-4">
-          {stepData.map((step) => (
+          {stepDataMentee.map((step) => (
             <div
               key={step.step}
               className={`p-4 rounded-lg transition-all duration-500 ease-in-out transform ${
@@ -475,6 +478,47 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
                   </div>
                 )}
 
+                {/* Multi Bool options */}
+                {question.type === "multi-bool-options" && (
+                  <div className="space-y-4">
+                  {question.options.map((option, optIndex) => (
+                    <div key={optIndex}>
+                      <div className="font-medium text-gray-700">{option.label}</div>
+                      <div className="flex gap-5 px-3 mt-2">
+                        <div>
+                          <label className="text-gray-700 space-x-2">
+                            <input
+                              type="radio"
+                              name={`q15_${optIndex}`} // shared name per option
+                              checked={formData[`q15_${optIndex}`] === true}
+                              onChange={() => handleInputChange(`q15_${optIndex}`, true)}
+                            />
+                            <span>
+                              Yes
+                            </span>
+                          </label>
+                        </div>
+                        <div>
+                          <label className="text-gray-700 space-x-2">
+                            <input
+                              type="radio"
+                              name={`q15_${optIndex}`}
+                              checked={formData[`q15_${optIndex}`] === false}
+                              onChange={() => handleInputChange(`q15_${optIndex}`, false)}
+                            />
+                            <span>
+                              No
+                            </span>
+                          </label>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  </div>
+                )}
+
+
+
                 {/* Radio Buttons */}
                 {question.type === "radio" && (
                   <div className="space-y-3">
@@ -497,40 +541,124 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
 
                 {/* Time Selector */}
                 {question.type === "time-selector" && (
-                  <DatePicker onChange={handleDateChange} />
-                  // <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  //   {question.options.map((timeSlot, optIndex) => (
-                  //     <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
-                  //       <input
-                  //         type="checkbox"
-                  //         className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                  //         checked={(formData[question.id] || []).includes(timeSlot)}
-                  //         onChange={(e) => {
-                  //           const currentValues = formData[question.id] || [];
-                  //           let newValues;
-                  //           if (e.target.checked) {
-                  //             newValues = [...currentValues, timeSlot];
-                  //           } else {
-                  //             newValues = currentValues.filter(v => v !== timeSlot);
-                  //           }
-                  //           if (question.maxSelections && newValues.length > question.maxSelections) {
-                  //             newValues = newValues.slice(-question.maxSelections);
-                  //           }
-                  //           console.log("QUESTIONS>ID:::", question.id);
-                  //           handleInputChange(question.id, newValues);
-                  //         }}
-                  //         required
-                  //       />
-                  //       <span className="text-gray-700 text-sm">{timeSlot}</span>
-                  //     </label>
-                  //   ))}
-                  //   {question.maxSelections && (
-                  //     <p className="text-sm text-gray-500 col-span-full mt-2">
-                  //       Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
-                  //     </p>
-                  //   )}
-                  // </div>
+                  // <DatePicker onChange={handleDateChange} />
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {question.options.map((timeSlot, optIndex) => (
+                      <label key={optIndex} className="flex items-center space-x-3 p-3 hover:bg-gray-50 rounded cursor-pointer border border-gray-200">
+                        <input
+                          type="checkbox"
+                          className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                          checked={(formData[question.id] || []).includes(timeSlot)}
+                          onChange={(e) => {
+                            const currentValues = formData[question.id] || [];
+                            let newValues;
+                            if (e.target.checked) {
+                              newValues = [...currentValues, timeSlot];
+                            } else {
+                              newValues = currentValues.filter(v => v !== timeSlot);
+                            }
+                            if (question.maxSelections && newValues.length > question.maxSelections) {
+                              newValues = newValues.slice(-question.maxSelections);
+                            }
+                            console.log("QUESTIONS>ID:::", question.id);
+                            handleInputChange(question.id, newValues);
+                          }}
+                          required
+                        />
+                        <span className="text-gray-700 text-sm">{timeSlot}</span>
+                      </label>
+                    ))}
+                    {question.maxSelections && (
+                      <p className="text-sm text-gray-500 col-span-full mt-2">
+                        Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
+                      </p>
+                    )}
+                  </div>
                 )}
+
+                {question.type === "multi-select-dropdown" && (
+                  <div className="space-y-4">
+                    <div className="flex gap-2">
+                      <select
+                        value={formData.tempDay || ""}
+                        onChange={(e) => handleInputChange("tempDay", e.target.value)}
+                        className="border p-2 rounded text-gray-700"
+                      >
+                        <option value="">Select Day</option>
+                        {["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"].map((day) => (
+                          <option key={day} value={day}>{day}</option>
+                        ))}
+                      </select>
+
+                      <select
+                        value={formData.tempTime || ""}
+                        onChange={(e) => handleInputChange("tempTime", e.target.value)}
+                        className="border p-2 rounded text-gray-700"
+                      >
+                        <option value="">Select Time</option>
+                        {[
+                          "8-10AM", "9-11AM", "10AM-12PM",
+                          "1-3PM", "2-4PM", "3-5PM",
+                          "5-7PM", "6-8PM", "7-9PM"
+                        ].map((time) => (
+                          <option key={time} value={time}>{time}</option>
+                        ))}
+                      </select>
+
+                      <button
+                        className="bg-emerald-500 text-white px-3 py-1 enabled:hover:bg-emerald-600 rounded disabled:opacity-50 transition"
+                        disabled={
+                          !formData.tempDay || !formData.tempTime ||
+                          (formData[question.id] || []).length >= question.maxSelections
+                        }
+                        onClick={() => {
+                          const value = `${formData.tempDay} ${formData.tempTime}`;
+                          const currentValues = formData[question.id] || [];
+
+                          if (!currentValues.includes(value)) {
+                            const updated = [...currentValues, value].slice(0, question.maxSelections);
+                            handleInputChange(question.id, updated);
+                          }
+
+                          // Optionally reset dropdowns:
+                          handleInputChange("tempDay", "");
+                          handleInputChange("tempTime", "");
+                        }}
+                      >
+                        Add
+                      </button>
+                    </div>
+
+                    {/* Display selected values */}
+                    <ul className="space-y-3 mt-2">
+                      {(formData[question.id] || []).map((slot, i) => (
+                        <li key={slot} className="flex w-100 space-x-2 justify-between bg-gray-100 text-gray-700 px-3 py-1 rounded">
+                          <div>
+                            <span className="text-lg">{slot}</span>
+                          </div>
+                          <div>
+                            <button
+                              className="text-red-600 cursor-pointer"
+                              onClick={() => {
+                                const updated = (formData[question.id] || []).filter((v) => v !== slot);
+                                handleInputChange(question.id, updated);
+                              }}
+                            >
+                              remove
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+
+                    <p className="text-sm text-gray-500">
+                      Select up to {question.maxSelections} time slots. Selected: {(formData[question.id] || []).length}
+                    </p>
+                  </div>
+                )}
+
+
               </div>
             </div>
           ))}
@@ -561,7 +689,7 @@ const EnhancedOnboardingPage = ({ role, name, id }) => {
             ) : (
               <button
                 onClick={handleSave}
-                className="px-12 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-medium rounded-lg hover:from-emerald-700 hover:to-green-700 transition-all duration-300 shadow-md hover:shadow-lg"
+                className="px-12 py-3 bg-gradient-to-r from-emerald-600 to-green-600 text-white font-medium rounded-lg hover:from-emerald-700 hover:to-green-700 transition duration-300 shadow-md hover:shadow-lg"
               >
                 Save
               </button>

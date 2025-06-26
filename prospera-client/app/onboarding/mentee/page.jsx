@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 
-    const Mentee = () => {
+const Mentee = () => {
     const router = useRouter();
     const [role, setRole] = useState(null);
     const [name, setName] = useState("");
