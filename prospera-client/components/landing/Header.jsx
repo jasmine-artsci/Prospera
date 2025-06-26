@@ -8,7 +8,6 @@ import { supabase } from "@/lib/supabase";
 
 const Header = ({
   aboutRef,
-  pricingRef,
   featureRef,
   workRef,
   heroRef,
@@ -26,6 +25,7 @@ const Header = ({
       setUser(user);
       setLoading(false);
     });
+    console.log("Header::", user);
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user || null);
@@ -41,7 +41,7 @@ const Header = ({
   const router = useRouter();
 
   return (
-    <header className="sticky top-0 backdrop-blur-sm bg-green-700/40 z-20">
+    <header className="sticky top-0 backdrop-blur-sm z-20">
       <div className="flex justify-center items-center py-1.5 bg-black text-white text-sm gap-3">
         <p className="text-white/60 hidden md:block">
           Explore your environment with <span className="">Prospéra</span>.
@@ -55,15 +55,16 @@ const Header = ({
         <div className="flex items-center justify-around gap-6 md:justify-between sticky top-0 px-3 md:mx-60 lg:px-0">
           <div
             onClick={() => scrollToSection(heroRef)}
-            className="flex flex-col md:flex-row items-center gap-2 font-extrabold text-1xl"
-          >
+            className="flex flex-col text-black md:flex-row items-center gap-2 font-extrabold text-1xl"
+          > 
             <Image
               src="/images/prospera-logo.png"
               alt="Prospéra Logo"
-              width={120}
-              height={40}
+              width={50}
+              height={50}
               className="cursor-pointer"
             />
+            Propsera
           </div>
           <nav className="flex flex-col md:flex-row md:justify-center gap-3 md:gap-8 text-black/80 items-center">
           <div className="flex flex-row gap-10">
@@ -79,18 +80,6 @@ const Header = ({
                 className="cursor-pointer hover:text-black"
               >
                 Features
-              </button>
-              <button
-                onClick={() => scrollToSection(workRef)}
-                className="cursor-pointer hover:text-black"
-              >
-                Work
-              </button>
-              <button
-                onClick={() => scrollToSection(pricingRef)}
-                className="cursor-pointer hover:text-black"
-              >
-                Pricing
               </button>
             </div>
 

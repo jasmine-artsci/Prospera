@@ -16,11 +16,14 @@ export default function Onboarding() {
   useEffect(() => {
     async function fetchData(){
       const { data: { user } } = await supabase.auth.getUser();
+      console.log("actual user:::", user);
       const { data: userData, error } = await supabase
         .from('users')
         .select('role')
         .eq('auth_id', user.id)
         .single();
+
+      console.log("userData:::", userData);
 
       if(userData.role) router.push(`/onboarding/${userData.role}`);
       if(user.id !== authId) router.push('/');

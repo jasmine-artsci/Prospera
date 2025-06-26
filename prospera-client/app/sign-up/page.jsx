@@ -25,7 +25,7 @@ export default function SignupPage() {
         }
       }
     });
-    
+
     console.log("USER DATA:", data);
 
     if (error) {
@@ -34,13 +34,14 @@ export default function SignupPage() {
     };
 
     const userId = data.user?.id;
-    
-    await supabase.from('users').insert({
+
+    const {data: user, error: err} = await supabase.from('users').insert({
       auth_id: userId,
       name: name,
-      email: email
+      email: email,
     });
-
+    console.log("data from users:", user);
+    if(err) console.error(err);
     router.push(`/onboarding?auth_id=${userId}`);
   };
 
